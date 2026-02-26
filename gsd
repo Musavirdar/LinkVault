@@ -1,0 +1,171 @@
+#!/usr/bin/env bash
+# GSD - Get Shit Done
+# Usage: ./gsd <command>
+# Inspired by: https://github.com/nickjj/gsd
+
+set -eo pipefail
+
+API_DIR="src/LinkVault.Api"
+FRONTEND_DIR="frontend"
+API_URL="http://localhost:5000"
+FRONTEND_URL="http://localhost:3000"
+
+# ─── Colors ──────────────────────────────────────────────────────────────────
+RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
+BLUE='\033[0;34m'; CYAN='\033[0;36m'; BOLD='\033[1m'; NC='\033[0m'
+
+function info  { echo -e "${CYAN}[gsd]${NC} $*"; }
+function ok    { echo -e "${GREEN}[gsd]${NC} $*"; }
+function warn  { echo -e "${YELLOW}[gsd]${NC} $*"; }
+function fail  { echo -e "${RED}[gsd]${NC} $*"; exit 1; }
+function title { echo -e "\n${BOLD}${BLUE}── $* ──────────────────────────────${NC}"; }
+
+# ─── Commands ─────────────────────────────────────────────────────────────────
+
+function help {
+  title "LinkVault GSD"
+  echo -e "  ${BOLD}./gsd start${NC}         Start API + Frontend concurrently"
+  echo -e "  ${BOLD}./gsd api${NC}           Start .NET API only (port 5000)"
+  echo -e "  ${BOLD}./gsd fe${NC}            Start Next.js frontend only (port 3000)"
+  echo ""
+  echo -e "  ${BOLD}./gsd build${NC}         Build API (Release) + Frontend"
+  echo -e "  ${BOLD}./gsd build:api${NC}     Build .NET API in Release mode"
+  echo -e "  ${BOLD}./gsd build:fe${NC}      Build Next.js frontend"
+  echo -e "  ${BOLD}./gsd typecheck${NC}     Run tsc --noEmit on frontend"
+  echo ""
+  echo -e "  ${BOLD}./gsd db:migrate${NC}    Apply pending EF Core migrations"
+  echo -e "  ${BOLD}./gsd db:add NAME${NC}   Create a new EF Core migration"
+  echo -e "  ${BOLD}./gsd db:drop${NC}       Drop the database (⚠ destructive)"
+  echo ""
+  echo -e "  ${BOLD}./gsd test${NC}          Run all backend tests"
+  echo -e "  ${BOLD}./gsd lint${NC}          Run dotnet format + eslint"
+  echo ""
+  echo -e "  ${BOLD}./gsd push${NC}          Git add . → commit → push to origin/main"
+  echo -e "  ${BOLD}./gsd status${NC}        Show API + frontend health"
+  echo ""
+}
+
+function start {
+  title "Starting LinkVault"
+  info "API  → $API_URL"
+  info "App  → $FRONTEND_URL"
+
+  # Run both in parallel; Ctrl-C kills both
+  trap '{ kill $(jobs -p) 2>/dev/null; info "Stopped."; }' EXIT INT TERM
+
+  dotnet run --project "$API_DIR" --urls "$API_URL" &
+  (cd "$FRONTEND_DIR" && npm run dev) &
+
+  wait
+}
+
+function api {
+  title "Starting API"
+  info "Listening on $API_URL"
+  dotnet run --project "$API_DIR" --urls "$API_URL"
+}
+
+function fe {
+  title "Starting Frontend"
+  info "Listening on $FRONTEND_URL"
+  cd "$FRONTEND_DIR" && npm run dev
+}
+
+function build {
+  build:api
+  build:fe
+}
+
+function build:api {
+  title "Building API (Release)"
+  dotnet build "$API_DIR" -c Release --nologo -v minimal
+  ok "API build complete"
+}
+
+function build:fe {
+  title "Building Frontend"
+  cd "$FRONTEND_DIR" && npm run build
+  ok "Frontend build complete"
+}
+
+function typecheck {
+  title "TypeScript Check"
+  cd "$FRONTEND_DIR" && npx tsc --noEmit
+  ok "No TypeScript errors"
+}
+
+function db:migrate {
+  title "Running EF Core Migrations"
+  dotnet ef database update --project "$API_DIR"
+  ok "Database up to date"
+}
+
+function db:add {
+  local name="${1:-}" 
+  [ -z "$name" ] && fail "Usage: ./gsd db:add <MigrationName>"
+  title "Adding Migration: $name"
+  dotnet ef migrations add "$name" --project "$API_DIR"
+  ok "Migration '$name' created"
+}
+
+function db:drop {
+  warn "This will DROP the database. Are you sure? (y/N)"
+  read -r confirm
+  [ "$confirm" = "y" ] || { info "Aborted."; exit 0; }
+  dotnet ef database drop --force --project "$API_DIR"
+  ok "Database dropped"
+}
+
+function test {
+  title "Running Backend Tests"
+  dotnet test --logger "console;verbosity=normal" --nologo
+  ok "All tests passed"
+}
+
+function lint {
+  title "Linting"
+  info "dotnet format..."
+  dotnet format "$API_DIR" --verify-no-changes || warn "Formatting issues found — run: dotnet format $API_DIR"
+  info "eslint..."
+  cd "$FRONTEND_DIR" && npx eslint src --ext .ts,.tsx --max-warnings 0
+  ok "Lint complete"
+}
+
+function push {
+  title "Pushing to GitHub"
+  local msg="${1:-"chore: update $(date '+%Y-%m-%d %H:%M')"}"
+  git add .
+  git diff --cached --quiet && { warn "Nothing to commit."; exit 0; }
+  git commit -m "$msg"
+  git push origin main
+  ok "Pushed → github.com/Musavirdar/LinkVault"
+}
+
+function status {
+  title "LinkVault Status"
+
+  if curl -s -o /dev/null -w "%{http_code}" "$API_URL/api/auth/me" | grep -q "401"; then
+    ok "API  → $API_URL ${GREEN}[UP]${NC}"
+  else
+    echo -e "API  → $API_URL ${RED}[DOWN]${NC}"
+  fi
+
+  if curl -s -o /dev/null -w "%{http_code}" "$FRONTEND_URL" | grep -q "200"; then
+    ok "App  → $FRONTEND_URL ${GREEN}[UP]${NC}"
+  else
+    echo -e "App  → $FRONTEND_URL ${RED}[DOWN]${NC}"
+  fi
+}
+
+# ─── Dispatch ─────────────────────────────────────────────────────────────────
+cmd="${1:-help}"
+shift 2>/dev/null || true
+
+case "$cmd" in
+  help|start|api|fe|build|build:api|build:fe|typecheck|db:migrate|db:add|db:drop|test|lint|push|status)
+    "${cmd//:/_}" "$@" 2>/dev/null || "$cmd" "$@"
+    ;;
+  *)
+    fail "Unknown command: $cmd  (run ./gsd help)"
+    ;;
+esac
