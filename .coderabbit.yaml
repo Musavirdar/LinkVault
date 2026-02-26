@@ -1,0 +1,81 @@
+# CodeRabbit Configuration for LinkVault
+# Docs: https://docs.coderabbit.ai/getting-started/configure-coderabbit
+
+language: "en-US"
+
+reviews:
+  # Review every PR automatically
+  auto_review:
+    enabled: true
+    drafts: false          # Skip draft PRs
+    base_branches:
+      - "main"
+      - "develop"
+
+  # Specify which paths to review and how
+  path_filters:
+    - "!**/*.lock"
+    - "!**/bin/**"
+    - "!**/obj/**"
+    - "!**/.next/**"
+    - "!**/node_modules/**"
+    - "!**/Migrations/**"   # EF Core migrations — auto-generated, skip deep review
+
+  # Specific review instructions for each part of the stack
+  path_instructions:
+    - path: "src/LinkVault.Api/**"
+      instructions: |
+        This is an ASP.NET Core 8 Web API.
+        - Enforce async/await consistency — no .Result or .Wait()
+        - Check that new endpoints have [Authorize] unless explicitly public
+        - Ensure all service methods are called via interface, not concrete type
+        - Flag any raw SQL or missing .AsNoTracking() on read-only EF Core queries
+        - Verify CreateLinkRequest/UpdateLinkRequest DTOs are validated with DataAnnotations or FluentValidation
+        - All exceptions should propagate to ExceptionHandlingMiddleware — no bare try/catch that swallows errors silently
+        - Sensitive fields (PasswordHash, TwoFactorSecret) must never appear in response DTOs
+
+    - path: "src/LinkVault.Api/Controllers/**"
+      instructions: |
+        - Each controller action must return a typed ActionResult<T> or IActionResult — no `object`
+        - Check HTTP status codes: POST→201, DELETE→204, errors→4xx/5xx
+        - Ensure User.GetUserId() is used (not User.Identity.Name) for consistent user ID extraction
+
+    - path: "src/LinkVault.Api/Services/**"
+      instructions: |
+        - Business logic only — no HttpContext, no controller concerns
+        - Throw domain-specific exceptions (NotFoundException, ConflictException) rather than returning null
+        - Watch for N+1 queries — ensure related data is loaded with Include(), not lazy loaded
+
+    - path: "frontend/src/**"
+      instructions: |
+        This is a Next.js 15 (App Router) TypeScript frontend.
+        - All pages using hooks (useQuery, useAuthStore) MUST have 'use client' directive
+        - API responses from the backend use camelCase field names matching the C# DTOs
+          (e.g. `originalUrl` not `url`, `clickCount` not `clicks`)
+        - Never use `any` type — prefer proper type assertions or update types/index.ts
+        - React Query keys must be consistent — use arrays like ['links'] or ['analytics', 'links']
+        - Form submissions must map frontend field names to backend DTO field names (e.g. url → originalUrl)
+        - Framer Motion components require 'use client' on the importing page/component
+
+    - path: "frontend/src/app/(auth)/**"
+      instructions: |
+        - Auth pages must NOT import from react-query (no auth check loops)
+        - Password fields must never be logged or stored in component state beyond form scope
+        - Ensure error messages do NOT reveal whether an email exists (prevent enumeration)
+
+    - path: "frontend/src/types/index.ts"
+      instructions: |
+        This file is the single source of truth for API types.
+        - Types must match the C# DTO classes exactly (field names, optional/required, casing)
+        - If a field is added/removed here, check all pages that consume that type
+
+  # Code review tone and focus
+  review_status: true
+
+  # What to summarize in the PR description
+  finishing_touches:
+    docstrings:
+      enabled: false   # C# XML docs and TSDoc are opt-in for this project
+
+chat:
+  auto_reply: true     # Allow @coderabbitai replies in PR comments
