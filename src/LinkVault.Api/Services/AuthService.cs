@@ -41,19 +41,38 @@ public class AuthService : IAuthService
         if (await _context.Users.AnyAsync(u => u.Username == request.Username))
             throw new ConflictException("Username already taken");
 
+        if (request.AccountType == AccountType.Corporate &&
+            string.IsNullOrWhiteSpace(request.OrganizationName))
+            throw new ConflictException("Organization name is required for corporate accounts");
+
+        // For corporate accounts — create the organization first so we have its Id
+        Organization? organization = null;
+        if (request.AccountType == AccountType.Corporate)
+        {
+            organization = new Organization
+            {
+                Id        = Guid.NewGuid(),
+                Name      = request.OrganizationName!.Trim(),
+                CreatedAt = DateTime.UtcNow,
+            };
+            _context.Organizations.Add(organization);
+        }
+
         var user = new User
         {
-            Id = Guid.NewGuid(),
-            Email = request.Email,
-            Username = request.Username,
-            PasswordHash = HashPassword(request.Password),
-            FirstName = request.FirstName,
-            LastName = request.LastName,
-            AccountType = AccountType.Individual,
-            CreatedAt = DateTime.UtcNow
+            Id             = Guid.NewGuid(),
+            Email          = request.Email,
+            Username       = request.Username,
+            PasswordHash   = HashPassword(request.Password),
+            FirstName      = request.FirstName,
+            LastName       = request.LastName,
+            AccountType    = request.AccountType,
+            OrganizationId = organization?.Id,
+            CreatedAt      = DateTime.UtcNow
         };
 
         _context.Users.Add(user);
+
         await _context.SaveChangesAsync();
 
         return await BuildAuthResponseAsync(user);
