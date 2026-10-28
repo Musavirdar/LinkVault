@@ -1,0 +1,24 @@
+planning/
+.DS_Store
+
+# Node/React
+node_modules/
+dist/
+build/
+.env.local
+
+# .NET / C#
+bin/
+obj/
+*.user
+*.userenv
+*.suo
+*.sln.docstates
+.vscode/
+
+# SQLite
+*.db
+*.db-shm
+*.db-wal
+ponytail/
+ponytail/

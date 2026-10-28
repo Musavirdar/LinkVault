@@ -1,0 +1,53 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  backend-test:
+    name: Backend Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore Backend Dependencies
+        run: |
+          if [ -f "sharedb1.sln" ]; then
+            dotnet restore sharedb1.sln
+            dotnet build sharedb1.sln --configuration Release --no-restore
+            dotnet test backend/LinkVaultApi.Tests/LinkVaultApi.Tests.csproj --configuration Release --no-build --verbosity normal
+          elif [ -f "LinkVault-main/sharedb1.sln" ]; then
+            cd LinkVault-main
+            dotnet restore sharedb1.sln
+            dotnet build sharedb1.sln --configuration Release --no-restore
+            dotnet test backend/LinkVaultApi.Tests/LinkVaultApi.Tests.csproj --configuration Release --no-build --verbosity normal
+          fi
+
+  frontend-build:
+    name: Frontend Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+
+      - name: Build Frontend Application
+        run: |
+          if [ -d "app" ]; then
+            cd app && npm ci && npm run build
+          elif [ -d "LinkVault-main/app" ]; then
+            cd LinkVault-main/app && npm ci && npm run build
+          fi

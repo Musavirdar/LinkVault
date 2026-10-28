@@ -1,0 +1,36 @@
+# Prerequisites & Environments
+.env.local
+.env.*.local
+
+# Node / Frontend
+node_modules/
+dist/
+build/
+.npm/
+
+# .NET & Visual Studio / C#
+bin/
+obj/
+*.user
+*.userenv
+*.suo
+*.userprefs
+*.sln.docstates
+.vs/
+.vscode/
+TestResults/
+*.trx
+
+# SQLite / Local DBs
+*.db
+*.db-shm
+*.db-wal
+
+# OS Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary / Scratch
+*.tmp
+*.log

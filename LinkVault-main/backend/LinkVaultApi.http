@@ -1,0 +1,6 @@
+@LinkVaultApi_HostAddress = http://localhost:5197
+
+GET {{LinkVaultApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
