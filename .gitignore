@@ -34,3 +34,13 @@ desktop.ini
 # Temporary / Scratch
 *.tmp
 *.log
+
+# Uploads & local storage
+uploads/
+**/uploads/
+
+# Local environment secrets (keep templates)
+.env
+.env.production
+!.env.example
+

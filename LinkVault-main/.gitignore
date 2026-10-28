@@ -1,24 +1,46 @@
-planning/
-.DS_Store
+# Prerequisites & Environments
+.env.local
+.env.*.local
 
-# Node/React
+# Node / Frontend
 node_modules/
 dist/
 build/
-.env.local
+.npm/
 
-# .NET / C#
+# .NET & Visual Studio / C#
 bin/
 obj/
 *.user
 *.userenv
 *.suo
+*.userprefs
 *.sln.docstates
+.vs/
 .vscode/
+TestResults/
+*.trx
 
-# SQLite
+# SQLite / Local DBs
 *.db
 *.db-shm
 *.db-wal
-ponytail/
-ponytail/
+
+# OS Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary / Scratch
+*.tmp
+*.log
+
+# Uploads & local storage
+uploads/
+**/uploads/
+
+# Local environment secrets (keep templates)
+.env
+.env.production
+!.env.example
+
