@@ -1,73 +1,143 @@
-# LinkVault — Secure Digital Workspace
+# LinkVault — Enterprise Digital Workspace & Secure Content Hub
 
-LinkVault is a unified workspace for teams and organizations to manage links, files, and directories with enterprise-grade access control and real-time collaboration.
+[![CI](https://github.com/Musavirdar/LinkVault/actions/workflows/ci.yml/badge.svg)](https://github.com/Musavirdar/LinkVault/actions/workflows/ci.yml)
+[![.NET 8](https://img.shields.io/badge/.NET-8.0-blue.svg)](https://dotnet.microsoft.com/)
+[![React 18](https://img.shields.io/badge/React-18.0-61dafb.svg)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178c6.svg)](https://www.typescriptlang.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-This repository is integrated with official **[GitHub Spec Kit](https://github.com/github/spec-kit)** for Spec-Driven Development (SDD).
+**LinkVault** is an enterprise-grade, multi-tenant digital workspace combining secure file management, link hubs, hierarchical directories, real-time collaboration, and audit telemetry in a single high-performance platform.
 
----
-
-## 🔒 Security & Access Hardening (`001-security-access-hardening`)
-
-The codebase includes full security hardening implemented under `specs/001-security-access-hardening/`:
-
-- **Authenticated File Downloads:** Eliminated static file exposure at `/uploads`. Streaming file downloads require Bearer JWT authorization or 60-second single-use download tickets (`/api/files/{id}/download`, `/api/files/{id}/ticket`).
-- **Organization-Scoped Sharing:** External share link creation enforces the `CanShare` authorization policy and strict tenant isolation (`OrganizationId`).
-- **Authentication Rate Limiting:** Fixed-window rate limiting (10 requests/minute per client IP) on all authentication and sensitive endpoints with automatic `Retry-After: 60` headers.
-- **Upload Inspection & SVG XSS Prevention:** Magic byte header verification for PDF, PNG, JPEG, SVG, and Office formats; rejection of disguised PE/ELF executables; sanitization against directory traversal; and forced `Content-Disposition: attachment` + `X-Content-Type-Options: nosniff` for SVGs.
-- **Fail-Fast Startup Validation:** Refuses boot if `JwtSettings:Secret` is under 32 bytes or matches default placeholders, or if database connection strings are unconfigured.
-- **Admin-Only Audit Logs:** Audit logs restricted strictly to the `Admin` role with mandatory organization isolation.
-- **Data Integrity:** Directory hierarchy normalized so root folders use `null` rather than `Guid.Empty`.
-- **Automated Testing:** 26 comprehensive unit and integration tests (`LinkVaultApi.Tests`) running in CI via GitHub Actions.
+Designed for organizations requiring strict tenant isolation, zero-trust file streaming, and end-to-end audit compliance.
 
 ---
 
-## 📂 Project Structure
+## 📸 Product Overview & Highlights
+
+![LinkVault Dashboard](screenshots/dashboard.png)
+
+### Key Capabilities
+
+| Feature | Description | Screenshot |
+|---|---|---|
+| **Secure Files & Chunked Uploads** | Large-file chunked uploading with real-time assembly, magic-byte inspection, SVG XSS sanitization, and atomic single-use download tickets. | ![Files](screenshots/files.png) |
+| **Link Hub & Public Profiles** | Centralized link vault with link scheduling, click tracking, custom slugs, and customizable public profile pages. | ![Links](screenshots/links.png) |
+| **Hierarchical Directories** | Multi-level directory structures with role-based folder permissions, recursive navigation, and inheritance. | ![Directories](screenshots/directories.png) |
+| **Real-Time Analytics & Audit** | Built-in analytics tracking views, downloads, clicks, and immutable admin audit trails with actor and IP attribution. | ![Analytics](screenshots/analytics.png) |
+| **Enterprise Authentication** | JWT authentication with refresh tokens, TOTP two-factor authentication (2FA), OAuth (Google, GitHub), and reverse-proxy rate limiting. | ![Login](screenshots/login.png) |
+
+---
+
+## 🛠️ Architecture & Tech Stack
 
 ```text
-├── .agents/                    # GitHub Spec Kit agent skills & workflows
-├── .github/workflows/          # CI/CD pipeline (backend test & frontend build)
-├── .specify/                   # Spec Kit configuration, scripts & constitution
-├── specs/                      # Feature specifications, plans & tasks
-│   └── 001-security-access-hardening/
-└── LinkVault-main/             # Application source code
-    ├── app/                    # React 18 + Vite + Tailwind CSS frontend
-    ├── backend/                # ASP.NET Core 8 Web API
-    │   └── LinkVaultApi.Tests/ # xUnit + WebApplicationFactory test suite
-    ├── docker-compose.yml      # Local PostgreSQL & services
-    └── sharedb1.sln            # .NET Solution file
+├── app/                        # Frontend: React 18 + TypeScript + Vite + Tailwind CSS
+├── backend/                    # Backend API: ASP.NET Core 8 Web API + EF Core 8
+│   ├── Controllers/            # REST API endpoints & chunked upload controllers
+│   ├── Data/                   # LinkVaultDbContext & PostgreSQL configuration
+│   ├── Middleware/             # Security headers, rate limiting, audit & error handling
+│   ├── Models/                 # Domain entities & relationships
+│   ├── Services/               # File validation, storage providers, JWT, auth
+│   └── LinkVaultApi.Tests/     # xUnit integration and unit test suite
+├── docker-compose.yml          # Containerized local environment (PostgreSQL & API)
+├── screenshots/                # Application UI walkthrough imagery
+└── sharedb1.sln                # Root .NET Solution file
 ```
+
+- **Frontend**: React 18, TypeScript, Tailwind CSS, Lucide React, Vite
+- **Backend API**: ASP.NET Core 8 Web API, Entity Framework Core 8, SignalR (Real-time collaboration)
+- **Database**: PostgreSQL 16 (with connection pooling and automatic migrations)
+- **Storage**: Pluggable storage provider architecture (Local filesystem / Cloud storage abstraction)
+- **Security**: Strict startup validation, Magic-byte verification, Atomic DB ticket redemption, Reverse-proxy IP partition
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Getting Started
 
-### 1. Run Tests
-```powershell
-dotnet test LinkVault-main/backend/LinkVaultApi.Tests/LinkVaultApi.Tests.csproj
+### Prerequisites
+- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+- [Node.js 18+](https://nodejs.org/) & npm
+- [PostgreSQL 16](https://www.postgresql.org/) or [Docker Desktop](https://www.docker.com/)
+
+### 1. Environment Setup
+
+Copy example environment configurations and provide your local credentials:
+
+```bash
+# Set runtime environment variables
+export ConnectionStrings__DefaultConnection="Host=localhost;Port=5432;Database=linkvault;Username=postgres;Password=your_secure_password"
+export JwtSettings__Secret="your-at-least-32-byte-long-secure-production-key-here"
 ```
 
-### 2. Backend API
+*(On Windows PowerShell):*
 ```powershell
-cd LinkVault-main/backend
+$env:ConnectionStrings__DefaultConnection = "Host=localhost;Port=5432;Database=linkvault;Username=postgres;Password=your_secure_password"
+$env:JwtSettings__Secret = "your-at-least-32-byte-long-secure-production-key-here"
+```
+
+### 2. Run with Docker Compose
+
+```bash
+docker-compose up -d
+```
+
+### 3. Run Locally from Source
+
+#### Backend API
+```powershell
+cd backend
 dotnet run
 ```
+API runs on `http://localhost:5000` (Swagger available at `http://localhost:5000/swagger` in development).
 
-### 3. Frontend Client
+#### Frontend Client
 ```powershell
-cd LinkVault-main/app
+cd app
 npm install
 npm run dev
 ```
+Client runs on `http://localhost:5173`.
+
+### 4. Running Automated Tests
+
+```powershell
+dotnet test sharedb1.sln
+```
 
 ---
 
-## 📜 Spec-Driven Development (SDD) Commands
+## 🔒 Security Hardening & Zero-Trust Architecture
 
-| Command | Skill | Action |
+LinkVault enforces defense-in-depth across the application lifecycle:
+
+1. **Zero-Secret Configuration**: No committed credentials or passwords in any configuration file (`appsettings.json`, `docker-compose.yml`).
+2. **Strict Fail-Fast Startup Validation**: Startup validation actively detects and halts boot if keys match known default placeholders or passwords.
+3. **Atomic Download Ticket Consumption**: Single-use download tickets are consumed via database-level atomic operations, eliminating concurrent race-condition replay attacks while validating that the target resource and user are active.
+4. **Deep File Content Validation**: Magic-byte inspection for all uploads, including full-payload streaming validation of assembled chunked files and complete SVG sanitization against script injection.
+5. **Reverse-Proxy-Aware Rate Limiting**: `UseForwardedHeaders` configures forwarded proxy headers (`X-Forwarded-For`, `X-Forwarded-Proto`) at the top of the HTTP pipeline, ensuring rate-limiting partitions correctly by client IP in production.
+
+---
+
+## 📐 Engineering & Specifications (Spec-Driven Development)
+
+LinkVault is developed under official **[GitHub Spec Kit](https://github.com/github/spec-kit)** methodology (Spec-Driven Development). Feature specifications, plans, and task breakdowns are maintained as first-class architectural artifacts:
+
+- `specs/001-security-access-hardening/`: Core access control, upload validation, rate limiting, and audit isolation.
+- `specs/002-core-hardening-and-cleanup/`: Repository canonicalization, zero-secret enforcement, chunked upload validation, atomic ticket consumption, and proxy rate limiting.
+
+### Spec Kit Workflow Commands
+
+| Command | Skill | Purpose |
 |---|---|---|
-| `/speckit-specify [desc]` | `speckit-specify` | Create new feature specification |
-| `/speckit-clarify` | `speckit-clarify` | Clarify ambiguous spec requirements |
-| `/speckit-plan [feature]` | `speckit-plan` | Generate implementation plan |
-| `/speckit-tasks [feature]` | `speckit-tasks` | Break plan into atomic tasks |
-| `/speckit-implement [feature]` | `speckit-implement` | Execute tasks sequentially |
-| `/speckit-converge [feature]` | `speckit-converge` | Verify code against spec |
+| `/speckit-specify [desc]` | `speckit-specify` | Create or update feature specification |
+| `/speckit-clarify` | `speckit-clarify` | Identify and clarify ambiguous spec requirements |
+| `/speckit-plan [feature]` | `speckit-plan` | Generate architecture and implementation plan |
+| `/speckit-tasks [feature]` | `speckit-tasks` | Break plan down into dependency-ordered atomic tasks |
+| `/speckit-implement [feature]` | `speckit-implement` | Execute tasks sequentially with test verification |
+| `/speckit-converge [feature]` | `speckit-converge` | Verify completed implementation against spec |
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

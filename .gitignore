@@ -44,3 +44,8 @@ uploads/
 .env.production
 !.env.example
 
+# Tool & Agent Scaffolding
+.specify/
+.agents/
+AGENTS.md
+
