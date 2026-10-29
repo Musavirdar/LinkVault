@@ -67,12 +67,14 @@ Copy example environment configurations and provide your local credentials:
 # Set runtime environment variables
 export ConnectionStrings__DefaultConnection="Host=localhost;Port=5432;Database=linkvault;Username=postgres;Password=your_secure_password"
 export JwtSettings__Secret="your-at-least-32-byte-long-secure-production-key-here"
+export ASPNETCORE_FORWARDEDHEADERS_ENABLED="true" # Required behind platform proxies (Render, Cloudflare, container ingress)
 ```
 
 *(On Windows PowerShell):*
 ```powershell
 $env:ConnectionStrings__DefaultConnection = "Host=localhost;Port=5432;Database=linkvault;Username=postgres;Password=your_secure_password"
 $env:JwtSettings__Secret = "your-at-least-32-byte-long-secure-production-key-here"
+$env:ASPNETCORE_FORWARDEDHEADERS_ENABLED = "true" # Required behind platform proxies (Render, Cloudflare, container ingress)
 ```
 
 ### 2. Run with Docker Compose
@@ -114,7 +116,7 @@ LinkVault enforces defense-in-depth across the application lifecycle:
 2. **Strict Fail-Fast Startup Validation**: Startup validation actively detects and halts boot if keys match known default placeholders, compromised passwords, or keys under 32 bytes.
 3. **Atomic Download Ticket Consumption**: Single-use download tickets are consumed via database-level atomic operations, eliminating concurrent race-condition replay attacks while validating that the target resource and user are active.
 4. **Deep File Content Validation**: Magic-byte inspection for all uploads, including full-payload streaming validation of assembled chunked files and complete SVG sanitization against script injection.
-5. **Reverse-Proxy-Aware Rate Limiting**: `UseForwardedHeaders` configures forwarded proxy headers (`X-Forwarded-For`, `X-Forwarded-Proto`) at the top of the HTTP pipeline, ensuring rate-limiting partitions correctly by client IP in production.
+5. **Anti-Spoofing Reverse-Proxy Rate Limiting**: `UseForwardedHeaders` enforces `ForwardLimit = 1` and retains default trusted proxy loopback validation, preventing malicious clients from injecting arbitrary `X-Forwarded-For` chains to evade rate limits. Platform deployments on Render enable `ASPNETCORE_FORWARDEDHEADERS_ENABLED=true` to automatically configure platform proxy header processing.
 6. **Cloud Credential Remediation & Invalidation**: Permanently purged cloud deployment configuration files (`.env.render`), applied universal `.env*` ignore rules, and blacklisted compromised passwords and placeholder JWT strings in `StartupValidator.cs`.
 
 ---

@@ -214,13 +214,12 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// T019: Reverse proxy forwarded headers handling (Render, Cloudflare, Nginx)
+// Reverse proxy forwarded headers handling with single-hop limit to prevent IP spoofing
 var forwardedHeadersOptions = new ForwardedHeadersOptions
 {
-    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+    ForwardLimit = 1
 };
-forwardedHeadersOptions.KnownNetworks.Clear();
-forwardedHeadersOptions.KnownProxies.Clear();
 app.UseForwardedHeaders(forwardedHeadersOptions);
 
 // Only redirect to HTTPS in production — local dev has no valid cert

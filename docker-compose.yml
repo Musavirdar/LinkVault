@@ -29,6 +29,7 @@ services:
     container_name: linkvault-backend
     environment:
       ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
       ASPNETCORE_URLS: http://+:80
       ConnectionStrings__DefaultConnection: Host=postgres;Database=linkvault;Username=linkvault;Password=${POSTGRES_PASSWORD}
       JwtSettings__Secret: ${JWT_SECRET}

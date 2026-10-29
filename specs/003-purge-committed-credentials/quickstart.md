@@ -77,6 +77,7 @@ Execute in the [Render Dashboard](https://dashboard.render.com):
    - Set `ConnectionStrings__DefaultConnection` to the new connection string (include `SslMode=Require;` for ADO.NET / Npgsql).
    - Generate a fresh 256-bit JWT secret (e.g., using `[Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Maximum 256 }))`).
    - Set `JwtSettings__Secret` to this new secret, ensuring it does **not** match the placeholder.
+   - Set `ASPNETCORE_FORWARDEDHEADERS_ENABLED` to `true` (enables platform reverse proxy forwarded headers so rate limiting works correctly without spoofing).
    - Click **Save Changes** and trigger a manual redeploy.
 
 3. **Verify Deployment Health**:
