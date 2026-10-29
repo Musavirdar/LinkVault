@@ -134,6 +134,38 @@ public class StartupValidationTests
     }
 
     [Fact]
+    public void Validate_WithCommittedRenderPostgresPassword_ShouldThrowInvalidOperationException()
+    {
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["JwtSettings:Secret"] = "a-very-strong-and-secure-jwt-secret-key-that-exceeds-32-bytes!",
+                ["ConnectionStrings:DefaultConnection"] = "Host=dpg-d6p8fb9j16oc738ukdkg-a.oregon-postgres.render.com;Port=5432;Database=linkvault_db_19f1;Username=linkvault_db_19f1_user;Password=QHMroGZ1oxMou8G7x8qwgwds24Uk7kIg;SslMode=Require;"
+            })
+            .Build();
+
+        var act = () => StartupValidator.Validate(config);
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*Insecure default database password detected*");
+    }
+
+    [Fact]
+    public void Validate_WithCommittedRenderPlaceholderJwtSecret_ShouldThrowInvalidOperationException()
+    {
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["JwtSettings:Secret"] = "replace_this_with_a_very_long_secure_random_string_for_production",
+                ["ConnectionStrings:DefaultConnection"] = "Host=localhost;Database=linkvault;Username=postgres;Password=test"
+            })
+            .Build();
+
+        var act = () => StartupValidator.Validate(config);
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*Insecure default JWT secret placeholder*");
+    }
+
+    [Fact]
     public void Validate_WithValidConfiguration_ShouldNotThrow()
     {
         var config = new ConfigurationBuilder()

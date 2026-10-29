@@ -110,11 +110,12 @@ dotnet test sharedb1.sln
 
 LinkVault enforces defense-in-depth across the application lifecycle:
 
-1. **Zero-Secret Configuration**: No committed credentials or passwords in any configuration file (`appsettings.json`, `docker-compose.yml`).
-2. **Strict Fail-Fast Startup Validation**: Startup validation actively detects and halts boot if keys match known default placeholders or passwords.
+1. **Zero-Secret Configuration**: No committed credentials or passwords in any configuration file (`appsettings.json`, `docker-compose.yml`, `.env*`).
+2. **Strict Fail-Fast Startup Validation**: Startup validation actively detects and halts boot if keys match known default placeholders, compromised passwords, or keys under 32 bytes.
 3. **Atomic Download Ticket Consumption**: Single-use download tickets are consumed via database-level atomic operations, eliminating concurrent race-condition replay attacks while validating that the target resource and user are active.
 4. **Deep File Content Validation**: Magic-byte inspection for all uploads, including full-payload streaming validation of assembled chunked files and complete SVG sanitization against script injection.
 5. **Reverse-Proxy-Aware Rate Limiting**: `UseForwardedHeaders` configures forwarded proxy headers (`X-Forwarded-For`, `X-Forwarded-Proto`) at the top of the HTTP pipeline, ensuring rate-limiting partitions correctly by client IP in production.
+6. **Cloud Credential Remediation & Invalidation**: Permanently purged cloud deployment configuration files (`.env.render`), applied universal `.env*` ignore rules, and blacklisted compromised passwords and placeholder JWT strings in `StartupValidator.cs`.
 
 ---
 
@@ -124,6 +125,7 @@ LinkVault is developed under official **[GitHub Spec Kit](https://github.com/git
 
 - `specs/001-security-access-hardening/`: Core access control, upload validation, rate limiting, and audit isolation.
 - `specs/002-core-hardening-and-cleanup/`: Repository canonicalization, zero-secret enforcement, chunked upload validation, atomic ticket consumption, and proxy rate limiting.
+- `specs/003-purge-committed-credentials/`: Purge of committed credentials, universal environment file ignore rules, fail-fast startup blacklists, and Render secret rotation runbook.
 
 ### Spec Kit Workflow Commands
 

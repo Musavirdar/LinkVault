@@ -41,7 +41,9 @@ uploads/
 
 # Local environment secrets (keep templates)
 .env
-.env.production
+.env.*
+.env.render
+*.env.render
 !.env.example
 
 # Tool & Agent Scaffolding

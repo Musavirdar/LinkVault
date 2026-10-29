@@ -14,12 +14,14 @@ public static class StartupValidator
         "12345678901234567890123456789012",
         "linkvault-default-key-override-with-jwt-secret-in-production-env",
         "lv-dev-secret-key-a8f3b9c2e1d4a7f6b5c8e2d1f4a9b3c7",
-        "your-super-secret-key-that-is-at-least-32-characters-long-for-jwt-signing"
+        "your-super-secret-key-that-is-at-least-32-characters-long-for-jwt-signing",
+        "replace_this_with_a_very_long_secure_random_string_for_production"
     ];
 
     private static readonly string[] InsecurePasswords =
     [
-        "linkvault123"
+        "linkvault123",
+        "QHMroGZ1oxMou8G7x8qwgwds24Uk7kIg"
     ];
 
     public static void Validate(IConfiguration configuration)
