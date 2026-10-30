@@ -9,5 +9,4 @@ public interface IVaultAgentService
     Task<ApprovePlanResponse> ApprovePlanAsync(Guid planId, ClaimsPrincipal user, CancellationToken cancellationToken = default);
     Task<RejectPlanResponse> RejectPlanAsync(Guid planId, ClaimsPrincipal user, CancellationToken cancellationToken = default);
     Task<AgentPlanResponse?> GetPlanAsync(Guid planId, ClaimsPrincipal user, CancellationToken cancellationToken = default);
-    Task<TranscribeResponse> TranscribeAudioAsync(Stream audioStream, string contentType, CancellationToken cancellationToken = default);
 }

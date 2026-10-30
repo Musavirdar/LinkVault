@@ -25,14 +25,151 @@ public class MetaLlamaClient : IMetaLlamaClient
 
     private string ResolveApiKey()
     {
-        if (!string.IsNullOrWhiteSpace(_config.ApiKey))
-            return _config.ApiKey;
+        var envKey = Environment.GetEnvironmentVariable("META_MODEL_API_KEY")
+            ?? Environment.GetEnvironmentVariable("BASETEN_API_KEY")
+            ?? Environment.GetEnvironmentVariable("LLAMA_API_KEY");
 
-        var envKey = Environment.GetEnvironmentVariable("LLAMA_API_KEY")
-            ?? Environment.GetEnvironmentVariable("GROQ_API_KEY")
-            ?? Environment.GetEnvironmentVariable("OPENAI_API_KEY");
+        if (!string.IsNullOrWhiteSpace(envKey))
+            return envKey;
 
-        return envKey ?? string.Empty;
+        return _config.ApiKey ?? string.Empty;
+    }
+
+    private string ResolveBaseUrl()
+    {
+        var envUrl = Environment.GetEnvironmentVariable("META_MODEL_BASE_URL");
+        if (!string.IsNullOrWhiteSpace(envUrl))
+            return envUrl;
+
+        return string.IsNullOrWhiteSpace(_config.BaseUrl) ? "https://bridge.baseten.co/v1" : _config.BaseUrl;
+    }
+
+    private string ResolveLlama33Model()
+    {
+        var envModel = Environment.GetEnvironmentVariable("META_MODEL_NAME");
+        if (!string.IsNullOrWhiteSpace(envModel))
+            return envModel;
+
+        return string.IsNullOrWhiteSpace(_config.Llama33Model) ? "meta-llama/Llama-3.3-70B-Instruct" : _config.Llama33Model;
+    }
+
+    public static JsonArray GetWorkspaceToolsDefinition()
+    {
+        return new JsonArray
+        {
+            new JsonObject
+            {
+                ["type"] = "function",
+                ["function"] = new JsonObject
+                {
+                    ["name"] = "create_directory",
+                    ["description"] = "Create a new directory in the workspace",
+                    ["parameters"] = new JsonObject
+                    {
+                        ["type"] = "object",
+                        ["properties"] = new JsonObject
+                        {
+                            ["name"] = new JsonObject { ["type"] = "string", ["description"] = "Name of the directory to create" },
+                            ["parentDirectoryId"] = new JsonObject { ["type"] = "string", ["description"] = "Optional GUID of parent directory" }
+                        },
+                        ["required"] = new JsonArray { "name" }
+                    }
+                }
+            },
+            new JsonObject
+            {
+                ["type"] = "function",
+                ["function"] = new JsonObject
+                {
+                    ["name"] = "move_resource",
+                    ["description"] = "Move an existing file or resource into a target directory",
+                    ["parameters"] = new JsonObject
+                    {
+                        ["type"] = "object",
+                        ["properties"] = new JsonObject
+                        {
+                            ["resourceId"] = new JsonObject { ["type"] = "string", ["description"] = "GUID of the resource to move" },
+                            ["targetDirectoryId"] = new JsonObject { ["type"] = "string", ["description"] = "Destination directory GUID (or null for root)" }
+                        },
+                        ["required"] = new JsonArray { "resourceId" }
+                    }
+                }
+            },
+            new JsonObject
+            {
+                ["type"] = "function",
+                ["function"] = new JsonObject
+                {
+                    ["name"] = "create_share_link",
+                    ["description"] = "Generate a secure, time-bound public share link for a resource",
+                    ["parameters"] = new JsonObject
+                    {
+                        ["type"] = "object",
+                        ["properties"] = new JsonObject
+                        {
+                            ["resourceId"] = new JsonObject { ["type"] = "string", ["description"] = "GUID of the resource to share" },
+                            ["expiryDays"] = new JsonObject { ["type"] = "integer", ["description"] = "Lifetime of share link in days (1-365)" },
+                            ["password"] = new JsonObject { ["type"] = "string", ["description"] = "Optional access password" },
+                            ["maxDownloads"] = new JsonObject { ["type"] = "integer", ["description"] = "Optional maximum download limit" }
+                        },
+                        ["required"] = new JsonArray { "resourceId" }
+                    }
+                }
+            },
+            new JsonObject
+            {
+                ["type"] = "function",
+                ["function"] = new JsonObject
+                {
+                    ["name"] = "search",
+                    ["description"] = "Search workspace files and links by query keyword",
+                    ["parameters"] = new JsonObject
+                    {
+                        ["type"] = "object",
+                        ["properties"] = new JsonObject
+                        {
+                            ["query"] = new JsonObject { ["type"] = "string", ["description"] = "Search keyword or filename query" }
+                        },
+                        ["required"] = new JsonArray { "query" }
+                    }
+                }
+            },
+            new JsonObject
+            {
+                ["type"] = "function",
+                ["function"] = new JsonObject
+                {
+                    ["name"] = "list_directory",
+                    ["description"] = "List contents of a directory",
+                    ["parameters"] = new JsonObject
+                    {
+                        ["type"] = "object",
+                        ["properties"] = new JsonObject
+                        {
+                            ["directoryId"] = new JsonObject { ["type"] = "string", ["description"] = "Optional GUID of directory to inspect (null for root)" }
+                        }
+                    }
+                }
+            },
+            new JsonObject
+            {
+                ["type"] = "function",
+                ["function"] = new JsonObject
+                {
+                    ["name"] = "delete_resource",
+                    ["description"] = "Move a resource to trash / mark as deleted",
+                    ["parameters"] = new JsonObject
+                    {
+                        ["type"] = "object",
+                        ["properties"] = new JsonObject
+                        {
+                            ["resourceId"] = new JsonObject { ["type"] = "string", ["description"] = "GUID of the resource to delete" }
+                        },
+                        ["required"] = new JsonArray { "resourceId" }
+                    }
+                }
+            }
+        };
     }
 
     public static (bool IsValid, string? Error) ValidateToolArguments(string toolName, string argsJson)
@@ -120,10 +257,12 @@ public class MetaLlamaClient : IMetaLlamaClient
     public async Task<LlamaPlanResult> GenerateToolPlanAsync(string userGoal, object? context = null, CancellationToken cancellationToken = default)
     {
         var apiKey = ResolveApiKey();
+        var baseUrl = ResolveBaseUrl();
+        var modelName = ResolveLlama33Model();
 
         if (string.IsNullOrWhiteSpace(apiKey))
         {
-            _logger.LogInformation("No Meta Llama API key configured. Executing intelligent local planning fallback for goal: {Goal}", userGoal);
+            _logger.LogInformation("No Meta model API key configured. Executing intelligent local planning fallback for goal: {Goal}", userGoal);
             var fallback = GenerateLocalFallbackPlan(userGoal, context);
             ValidateAndCapPlan(fallback);
             return fallback;
@@ -133,34 +272,29 @@ public class MetaLlamaClient : IMetaLlamaClient
         {
             var systemPrompt = @"You are the LinkVault Verifiable Workspace Agent.
 Decompose the user's workspace request into a sequence of tool calls (maximum 10 steps).
-Available tools:
-- list_directory(directoryId?: string)
-- search(query: string)
-- create_directory(name: string, parentDirectoryId?: string)
-- move_resource(resourceId: string, targetDirectoryId?: string)
-- create_share_link(resourceId: string, expiryDays?: int, password?: string, maxDownloads?: int)
-
-Respond with precise tool calls. Every move, share, or folder creation must be an individual step.";
+Use the provided tools to construct precise, sequential actions. Every move, share, or folder creation must be an individual tool call.";
 
             var requestBody = new JsonObject
             {
-                ["model"] = _config.Llama33Model,
+                ["model"] = modelName,
                 ["messages"] = new JsonArray
                 {
                     new JsonObject { ["role"] = "system", ["content"] = systemPrompt },
                     new JsonObject { ["role"] = "user", ["content"] = userGoal }
                 },
+                ["tools"] = GetWorkspaceToolsDefinition(),
+                ["tool_choice"] = "auto",
                 ["temperature"] = 0.1
             };
 
-            using var request = new HttpRequestMessage(HttpMethod.Post, $"{_config.BaseUrl.TrimEnd('/')}/chat/completions");
+            using var request = new HttpRequestMessage(HttpMethod.Post, $"{baseUrl.TrimEnd('/')}/chat/completions");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
             request.Content = new StringContent(requestBody.ToJsonString(), Encoding.UTF8, "application/json");
 
             var response = await _httpClient.SendAsync(request, cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogWarning("Meta Llama remote API returned status {StatusCode}. Falling back to local plan generation.", response.StatusCode);
+                _logger.LogWarning("Meta model remote API returned status {StatusCode}. Falling back to local plan generation.", response.StatusCode);
                 var fallback = GenerateLocalFallbackPlan(userGoal, context);
                 ValidateAndCapPlan(fallback);
                 return fallback;
@@ -184,6 +318,7 @@ Respond with precise tool calls. Every move, share, or folder creation must be a
             var summary = choice?["content"]?.ToString() ?? $"Synthesized plan containing {toolCallsList.Count} step(s).";
             if (toolCallsList.Count == 0)
             {
+                _logger.LogWarning("Remote Meta model returned 0 tool calls. Falling back to local heuristic plan generation.");
                 var fallback = GenerateLocalFallbackPlan(userGoal, context);
                 ValidateAndCapPlan(fallback);
                 return fallback;
@@ -199,7 +334,7 @@ Respond with precise tool calls. Every move, share, or folder creation must be a
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error calling Meta Llama endpoint. Using local fallback.");
+            _logger.LogError(ex, "Error calling Meta model endpoint. Using local fallback.");
             var fallback = GenerateLocalFallbackPlan(userGoal, context);
             ValidateAndCapPlan(fallback);
             return fallback;

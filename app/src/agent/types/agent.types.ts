@@ -80,12 +80,6 @@ export interface SafeShareScanResultDto {
   scannedAt: string;
 }
 
-export interface TranscribeResultDto {
-  transcribedText: string;
-  confidence: number;
-  durationSeconds: number;
-}
-
 export interface AgentPlanStatusEvent {
   planId: string;
   status: PlanStatus;

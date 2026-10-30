@@ -1,6 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Mic, MicOff, Loader2 } from 'lucide-react';
-import { agentApi } from '../services/agentApi';
+import { Mic, MicOff, AlertCircle } from 'lucide-react';
 
 interface VoiceCommandButtonProps {
   onTranscript: (text: string) => void;
@@ -12,109 +11,115 @@ export const VoiceCommandButton: React.FC<VoiceCommandButtonProps> = ({
   disabled = false,
 }) => {
   const [isRecording, setIsRecording] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const recognitionRef = useRef<any>(null);
 
-  const startRecording = async () => {
-    // 1. Try Browser Web Speech API first for zero-latency instant recognition
+  const toggleRecording = () => {
+    setErrorMessage(null);
+
+    // If currently recording, stop it
+    if (isRecording) {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      setIsRecording(false);
+      return;
+    }
+
+    // Use native Browser Web Speech API
     const windowWithSpeech = window as unknown as {
       webkitSpeechRecognition?: any;
       SpeechRecognition?: any;
     };
     const SpeechRecognition = windowWithSpeech.SpeechRecognition || windowWithSpeech.webkitSpeechRecognition;
 
-    if (SpeechRecognition) {
-      try {
-        const recognition = new SpeechRecognition();
-        recognition.lang = 'en-US';
-        recognition.continuous = false;
-        recognition.interimResults = false;
-
-        recognition.onstart = () => setIsRecording(true);
-        recognition.onresult = (event: any) => {
-          const transcript = event.results[0][0].transcript;
-          if (transcript) onTranscript(transcript);
-        };
-        recognition.onerror = () => setIsRecording(false);
-        recognition.onend = () => setIsRecording(false);
-
-        recognition.start();
-        return;
-      } catch {
-        // Fallback to MediaRecorder audio stream
-      }
+    if (!SpeechRecognition) {
+      setErrorMessage('Speech recognition is not supported in this browser. Please type your directive into the chat input.');
+      return;
     }
 
-    // 2. MediaRecorder stream fallback to /api/agent/transcribe
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = recorder;
-      chunksRef.current = [];
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.continuous = false;
+      recognition.interimResults = false;
 
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunksRef.current.push(e.data);
+      recognition.onstart = () => {
+        setIsRecording(true);
+        setErrorMessage(null);
       };
 
-      recorder.onstop = async () => {
-        setIsProcessing(true);
-        try {
-          const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
-          const res = await agentApi.transcribeAudio(blob);
-          if (res?.transcribedText) {
-            onTranscript(res.transcribedText);
-          }
-        } catch (err) {
-          console.warn('Voice transcription fallback failed:', err);
-        } finally {
-          setIsProcessing(false);
-          setIsRecording(false);
-          stream.getTracks().forEach((track) => track.stop());
+      recognition.onresult = (event: any) => {
+        const transcript = event.results?.[0]?.[0]?.transcript;
+        if (transcript) {
+          onTranscript(transcript);
         }
       };
 
-      recorder.start();
-      setIsRecording(true);
-    } catch (err) {
-      console.warn('Microphone access denied:', err);
-      setIsRecording(false);
-    }
-  };
+      recognition.onerror = (event: any) => {
+        console.warn('Speech recognition error:', event.error);
+        if (event.error === 'not-allowed') {
+          setErrorMessage('Microphone access was denied. Please allow microphone permissions in your browser.');
+        } else if (event.error === 'no-speech') {
+          setErrorMessage('No speech detected. Please try speaking again.');
+        } else {
+          setErrorMessage(`Speech recognition error: ${event.error}`);
+        }
+        setIsRecording(false);
+      };
 
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-    } else {
+      recognition.onend = () => {
+        setIsRecording(false);
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch (err) {
+      console.warn('Could not start speech recognition:', err);
+      setErrorMessage('Could not start speech recognition.');
       setIsRecording(false);
     }
   };
 
   return (
-    <button
-      type="button"
-      onClick={isRecording ? stopRecording : startRecording}
-      disabled={disabled || isProcessing}
-      title={isRecording ? 'Click to stop listening' : 'Hold or click to speak voice command'}
-      className={`relative p-2.5 rounded-lg border transition-all duration-200 flex items-center justify-center ${
-        isRecording
-          ? 'bg-red-500/20 text-red-500 border-red-500/40 animate-pulse'
-          : 'bg-bg-tertiary hover:bg-bg-secondary text-text-secondary hover:text-text-primary border-border-primary'
-      }`}
-    >
-      {isProcessing ? (
-        <Loader2 className="w-5 h-5 animate-spin text-accent-primary" />
-      ) : isRecording ? (
-        <MicOff className="w-5 h-5 text-red-500" />
-      ) : (
-        <Mic className="w-5 h-5" />
+    <div className="relative inline-flex items-center">
+      <button
+        type="button"
+        onClick={toggleRecording}
+        disabled={disabled}
+        title={isRecording ? 'Click to stop listening' : 'Click to speak voice command (uses browser speech recognition)'}
+        className={`relative p-2.5 rounded-lg border transition-all duration-200 flex items-center justify-center ${
+          isRecording
+            ? 'bg-red-500/20 text-red-500 border-red-500/40 animate-pulse'
+            : 'bg-bg-tertiary hover:bg-bg-secondary text-text-secondary hover:text-text-primary border-border-primary'
+        }`}
+      >
+        {isRecording ? (
+          <MicOff className="w-5 h-5 text-red-500" />
+        ) : (
+          <Mic className="w-5 h-5" />
+        )}
+        {isRecording && (
+          <span className="absolute -top-1 -right-1 flex h-3 w-3">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+          </span>
+        )}
+      </button>
+
+      {errorMessage && (
+        <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-64 p-2 bg-red-950/90 text-red-200 text-xs rounded-lg border border-red-800 shadow-xl flex items-start gap-1.5 z-50">
+          <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+          <span>{errorMessage}</span>
+          <button
+            type="button"
+            onClick={() => setErrorMessage(null)}
+            className="ml-auto text-red-400 hover:text-red-200 font-bold"
+          >
+            ×
+          </button>
+        </div>
       )}
-      {isRecording && (
-        <span className="absolute -top-1 -right-1 flex h-3 w-3">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-        </span>
-      )}
-    </button>
+    </div>
   );
 };

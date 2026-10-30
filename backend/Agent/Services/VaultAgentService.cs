@@ -275,18 +275,6 @@ public class VaultAgentService : IVaultAgentService
         return plan != null ? MapPlanToResponse(plan) : null;
     }
 
-    public async Task<TranscribeResponse> TranscribeAudioAsync(Stream audioStream, string contentType, CancellationToken cancellationToken = default)
-    {
-        await Task.CompletedTask;
-        var duration = Math.Max(1.0, audioStream.Length / 32000.0);
-        return new TranscribeResponse
-        {
-            TranscribedText = "Organize my uploads and share the financial report for 7 days",
-            Confidence = 0.98,
-            DurationSeconds = Math.Round(duration, 1)
-        };
-    }
-
     public async Task ExecutePlanStepsAsync(Guid planId, Guid orgId, Guid userId, ClaimsPrincipal user)
     {
         if (_scopeFactory != null)

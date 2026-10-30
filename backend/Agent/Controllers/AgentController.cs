@@ -130,18 +130,4 @@ public class AgentController : ControllerBase
         var result = await _safeShareGuard.ScanResourceAsync(request.ResourceId, userId);
         return Ok(result);
     }
-
-    [HttpPost("transcribe")]
-    [Consumes("multipart/form-data")]
-    public async Task<ActionResult<TranscribeResponse>> Transcribe(IFormFile? audio)
-    {
-        if (audio == null || audio.Length == 0)
-        {
-            return BadRequest(new { error = "No audio stream received." });
-        }
-
-        using var stream = audio.OpenReadStream();
-        var result = await _agentService.TranscribeAudioAsync(stream, audio.ContentType);
-        return Ok(result);
-    }
 }

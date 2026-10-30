@@ -66,10 +66,3 @@ public class SafeShareScanResponse
     public string Message { get; set; } = string.Empty;
     public DateTime ScannedAt { get; set; } = DateTime.UtcNow;
 }
-
-public class TranscribeResponse
-{
-    public string TranscribedText { get; set; } = string.Empty;
-    public double Confidence { get; set; } = 1.0;
-    public double DurationSeconds { get; set; }
-}

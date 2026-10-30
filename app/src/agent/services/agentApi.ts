@@ -1,11 +1,10 @@
-import { API_BASE_URL, apiClient } from '../../api/client';
+import { apiClient } from '../../api/client';
 import type {
   AgentActionPlanDto,
   ApprovePlanResponse,
   CreatePlanRequest,
   RejectPlanResponse,
   SafeShareScanResultDto,
-  TranscribeResultDto,
 } from '../types/agent.types';
 
 export const agentApi = {
@@ -59,29 +58,5 @@ export const agentApi = {
       throw new Error(res.error || 'Failed to scan resource');
     }
     return res.data;
-  },
-
-  async transcribeAudio(audioBlob: Blob): Promise<TranscribeResultDto> {
-    const token = localStorage.getItem('accessToken');
-    const formData = new FormData();
-    formData.append('audio', audioBlob, 'recording.webm');
-
-    const headers: Record<string, string> = {};
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    const response = await fetch(`${API_BASE_URL}/api/agent/transcribe`, {
-      method: 'POST',
-      headers,
-      body: formData,
-    });
-
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      throw new Error(err.message || err.error || 'Transcription failed');
-    }
-
-    return await response.json();
   },
 };
