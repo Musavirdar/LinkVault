@@ -45,25 +45,26 @@ export function NavItem({
     <motion.button
       onClick={onClick}
       className={cn(
-        'w-full flex items-center gap-3 px-3 py-2 rounded-md',
-        'text-sm font-medium transition-colors duration-200',
+        'w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl min-h-[44px]',
+        'text-sm font-medium transition-all duration-150',
         isActive 
-          ? 'bg-accent-primary/10 text-accent-primary' 
-          : 'text-text-secondary hover:text-text-primary hover:bg-bg-tertiary'
+          ? 'bg-[#0071E3] text-white shadow-sm shadow-[#0071E3]/25 font-semibold' 
+          : 'text-text-secondary hover:text-text-primary hover:bg-black/[0.04] dark:hover:bg-white/[0.06] active:bg-black/[0.08] dark:active:bg-white/10'
       )}
-      whileHover={{ x: 2 }}
       whileTap={{ scale: 0.98 }}
     >
-      <Icon className="w-5 h-5 flex-shrink-0" />
+      <Icon className={cn("w-4 h-4 flex-shrink-0 transition-transform", isActive ? "scale-105" : "")} />
       
       {!isCollapsed && (
         <>
-          <span className="flex-1 text-left">{label}</span>
+          <span className="flex-1 text-left tracking-tight truncate">{label}</span>
           {badge !== undefined && (
-            <span className="
-              px-2 py-0.5 text-xs rounded-full font-semibold
-              bg-accent-primary text-white
-            ">
+            <span className={cn(
+              "px-2 py-0.5 text-[11px] rounded-full font-semibold tracking-tight",
+              isActive 
+                ? "bg-white/20 text-white" 
+                : "bg-black/[0.06] dark:bg-white/10 text-foreground"
+            )}>
               {badge}
             </span>
           )}
@@ -84,8 +85,8 @@ export function NavSection({
   if (isCollapsed) return null;
   
   return (
-    <div className="px-3 py-2">
-      <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">
+    <div className="px-3.5 pt-4 pb-1.5">
+      <span className="text-[11px] font-semibold text-text-muted uppercase tracking-wider">
         {label}
       </span>
     </div>

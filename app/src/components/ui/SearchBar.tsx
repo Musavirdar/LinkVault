@@ -57,21 +57,27 @@ export function GlobalSearchBar() {
     return (
         <div className="relative w-full max-w-sm">
             <div className={cn(
-                'flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all',
-                'bg-[var(--bg-primary)] border',
-                open ? 'border-[var(--accent-primary)]' : 'border-[var(--border-strong)]'
+                'flex items-center gap-2.5 px-3.5 h-10 min-h-[40px] rounded-full transition-all duration-150',
+                'bg-black/[0.04] dark:bg-white/[0.06] border backdrop-blur-md',
+                open 
+                    ? 'border-[#0071E3] ring-4 ring-[#0071E3]/15' 
+                    : 'border-black/[0.06] dark:border-white/10 hover:border-black/[0.12] dark:hover:border-white/20'
             )}>
-                {loading ? <Loader2 className="w-4 h-4 animate-spin text-[var(--text-muted)] flex-shrink-0" /> : <Search className="w-4 h-4 text-[var(--text-muted)] flex-shrink-0" />}
+                {loading ? <Loader2 className="w-4 h-4 animate-spin text-text-muted flex-shrink-0" /> : <Search className="w-4 h-4 text-text-muted flex-shrink-0" />}
                 <input
                     ref={inputRef}
                     value={query}
                     onChange={e => setQuery(e.target.value)}
                     onFocus={() => allResults.length > 0 && setOpen(true)}
                     placeholder="Search links, files, directories..."
-                    className="flex-1 bg-transparent text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none"
+                    className="flex-1 bg-transparent text-xs sm:text-sm text-foreground placeholder:text-text-muted outline-none"
                 />
                 {query && (
-                    <button onClick={() => { setQuery(''); clearSearch(); }} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
+                    <button 
+                        onClick={() => { setQuery(''); clearSearch(); }} 
+                        className="rounded-full p-1 text-text-muted hover:text-foreground hover:bg-black/[0.06] dark:hover:bg-white/10 transition-colors"
+                        aria-label="Clear search"
+                    >
                         <X className="w-3.5 h-3.5" />
                     </button>
                 )}
@@ -80,31 +86,31 @@ export function GlobalSearchBar() {
             <AnimatePresence>
                 {open && allResults.length > 0 && (
                     <motion.div
-                        initial={{ opacity: 0, y: -4, scale: 0.97 }}
+                        initial={{ opacity: 0, y: -4, scale: 0.98 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -4, scale: 0.97 }}
+                        exit={{ opacity: 0, y: -4, scale: 0.98 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute top-full left-0 right-0 mt-1.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-strong)] shadow-2xl z-50 overflow-hidden"
+                        className="absolute top-full left-0 right-0 mt-2 rounded-2xl bg-white/95 dark:bg-[#1C1C1E]/95 backdrop-blur-2xl border border-black/[0.08] dark:border-white/12 shadow-[0_20px_50px_rgba(0,0,0,0.18)] z-50 overflow-hidden"
                     >
-                        <div className="max-h-64 overflow-y-auto">
+                        <div className="max-h-72 overflow-y-auto p-1.5">
                             {(['links', 'resources', 'directories'] as const).map(type => {
                                 const group = results?.[type] || [];
                                 if (!group.length) return null;
                                 return (
-                                    <div key={type}>
-                                        <div className="px-3 py-1.5 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider bg-[var(--bg-primary)]">
+                                    <div key={type} className="mb-1.5 last:mb-0">
+                                        <div className="px-3 py-1 text-[10px] font-semibold text-text-muted uppercase tracking-wider">
                                             {type}
                                         </div>
                                         {group.map(r => (
                                             <button
                                                 key={r.id}
-                                                className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-[var(--accent-primary)]/10 transition-colors text-left"
+                                                className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-[#0071E3]/10 text-foreground transition-colors text-left min-h-[40px]"
                                                 onClick={() => { setQuery(''); setOpen(false); }}
                                             >
-                                                <span className="text-[var(--accent-primary)]">{ICON_MAP[r.icon] || ICON_MAP[r.type] || <FileText className="w-3.5 h-3.5" />}</span>
+                                                <span className="text-[#0071E3] dark:text-[#0A84FF]">{ICON_MAP[r.icon] || ICON_MAP[r.type] || <FileText className="w-4 h-4" />}</span>
                                                 <div className="flex-1 min-w-0">
-                                                    <div className="text-sm font-medium text-[var(--text-primary)] truncate">{r.title}</div>
-                                                    {r.subtitle && <div className="text-xs text-[var(--text-muted)] truncate">{r.subtitle}</div>}
+                                                    <div className="text-xs sm:text-sm font-medium truncate">{r.title}</div>
+                                                    {r.subtitle && <div className="text-[11px] text-text-muted truncate">{r.subtitle}</div>}
                                                 </div>
                                             </button>
                                         ))}

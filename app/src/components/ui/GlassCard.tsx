@@ -14,22 +14,23 @@ export function GlassCard({
   className = '',
   hover = true,
   glow = false,
-  glowColor = '#8B5CF6',
+  glowColor = '#0071E3',
 }: GlassCardProps) {
   return (
     <motion.div
       className={cn(
-        'relative rounded-3xl overflow-hidden',
-        'bg-white/70 backdrop-blur-xl',
-        'border border-white/50',
-        'shadow-soft',
+        'relative rounded-2xl overflow-hidden',
+        'bg-white/75 dark:bg-[#1C1C1E]/75 backdrop-blur-2xl',
+        'border border-black/[0.06] dark:border-white/10',
+        'shadow-[0_8px_24px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]',
+        'before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-white/20 dark:before:via-white/10 before:to-transparent',
         className
       )}
       style={{
-        boxShadow: glow ? `0 0 40px ${glowColor}20, 0 8px 32px rgba(0,0,0,0.08)` : undefined,
+        boxShadow: glow ? `0 0 32px ${glowColor}25, 0 8px 24px rgba(0,0,0,0.06)` : undefined,
       }}
-      whileHover={hover ? { y: -2, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' } : undefined}
-      transition={{ duration: 0.2 }}
+      whileHover={hover ? { y: -2, boxShadow: '0 12px 32px rgba(0,0,0,0.08)' } : undefined}
+      transition={{ type: 'spring', stiffness: 400, damping: 28 }}
     >
       {children}
     </motion.div>
@@ -40,19 +41,20 @@ export function GlassCard({
 export function GradientCard({
   children,
   className = '',
-  gradient = 'from-violet-500/10 to-pink-500/10',
+  gradient = 'from-blue-500/10 to-indigo-500/10',
 }: GlassCardProps & { gradient?: string }) {
   return (
     <div
       className={cn(
-        'relative rounded-3xl overflow-hidden',
+        'relative rounded-2xl overflow-hidden',
         'bg-gradient-to-br',
         gradient,
-        'border border-white/30',
+        'border border-black/[0.06] dark:border-white/10',
+        'shadow-[0_8px_24px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]',
         className
       )}
     >
-      <div className="absolute inset-0 backdrop-blur-sm" />
+      <div className="absolute inset-0 backdrop-blur-xl bg-white/40 dark:bg-black/20" />
       <div className="relative z-10">{children}</div>
     </div>
   );
