@@ -55,6 +55,7 @@ export const useStore = create<AppState>()(
       setTheme: (theme) => {
         set({ theme });
         document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.classList.toggle('dark', theme === 'dark');
       },
       toggleTheme: () => {
         const themes: Theme[] = ['dark', 'light'];
@@ -129,10 +130,7 @@ export const useStore = create<AppState>()(
 // Initialize theme on load
 if (typeof window !== 'undefined') {
   const stored = localStorage.getItem('linkvault-storage');
-  if (stored) {
-    const parsed = JSON.parse(stored);
-    document.documentElement.setAttribute('data-theme', parsed.state?.theme || 'dark');
-  } else {
-    document.documentElement.setAttribute('data-theme', 'dark');
-  }
+  const theme = stored ? (JSON.parse(stored).state?.theme || 'dark') : 'dark';
+  document.documentElement.setAttribute('data-theme', theme);
+  document.documentElement.classList.toggle('dark', theme === 'dark');
 }

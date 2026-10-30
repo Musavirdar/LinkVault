@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  darkMode: ["class"],
+  darkMode: ["class", '[data-theme="dark"]'],
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
@@ -48,6 +48,17 @@ module.exports = {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // Design system semantic tokens
+        "surface-bright": "#fcf8fb",
+        "surface-container-highest": "#e4e2e4",
+        "secondary-container": "#e0dfe4",
+        "surface-container-low": "#f6f3f5",
+        "surface-container-high": "#eae7ea",
+        "surface-container": "#f0edef",
+        "surface-container-lowest": "#ffffff",
+        "primary-container": "#0071e3",
+        "outline-variant": "#c1c6d6",
+        "on-surface-variant": "#414753",
         // Custom theme colors
         'bg-primary': 'var(--bg-primary)',
         'bg-secondary': 'var(--bg-secondary)',
@@ -63,30 +74,45 @@ module.exports = {
         'accent-danger': 'var(--accent-danger)',
         'border-subtle': 'var(--border-subtle)',
         'border-strong': 'var(--border-strong)',
+        // Cupertino specifics
+        'cupertino-blue': '#0071E3',
+        'cupertino-blue-hover': '#0077ED',
+        'cupertino-blue-active': '#0066CC',
+        'cupertino-dark-blue': '#0A84FF',
+        'cupertino-green': '#34C759',
+        'cupertino-orange': '#FF9500',
+        'cupertino-red': '#FF3B30',
         // Ultra-light specific
         'accent-violet': '#8B5CF6',
         'accent-pink': '#EC4899',
-        'accent-emerald': '#10B981',
-        'accent-blue': '#3B82F6',
+        'accent-emerald': '#34C759',
+        'accent-blue': '#0071E3',
       },
       borderRadius: {
         '4xl': '2rem',
+        '3xl': '1.5rem',
+        '2xl': '1.25rem', // 20px (Apple card standard)
+        'xl': '1.125rem', // 18px (Apple card medium)
+        'lg': '0.75rem',  // 12px (Apple control / button / input)
+        'md': '0.625rem', // 10px
+        'sm': '0.5rem',   // 8px
+        'xs': '0.375rem', // 6px
+        'card': '1.125rem',
+        'control': '0.75rem',
         'full': '9999px',
-        xl: "calc(var(--radius) + 4px)",
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
-        xs: "calc(var(--radius) - 6px)",
       },
       boxShadow: {
-        xs: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
-        'soft': '0 8px 32px rgba(0, 0, 0, 0.08)',
-        'glow': '0 0 40px rgba(139, 92, 246, 0.15)',
-        'card': '0 4px 12px rgba(0, 0, 0, 0.05)',
-        'elevated': '0 8px 24px rgba(0, 0, 0, 0.12)',
+        xs: "0 1px 2px 0 rgb(0 0 0 / 0.04)",
+        'soft': '0 8px 24px rgba(0, 0, 0, 0.04)',
+        'glow': '0 0 32px rgba(0, 113, 227, 0.25)',
+        'card': '0 4px 20px rgba(0, 0, 0, 0.04)',
+        'card-dark': '0 8px 32px rgba(0, 0, 0, 0.35)',
+        'elevated': '0 16px 36px rgba(0, 0, 0, 0.08)',
+        'modal': '0 24px 60px rgba(0, 0, 0, 0.16), 0 4px 16px rgba(0, 0, 0, 0.06)',
+        'specular': 'inset 0 1px 0 0 rgba(255, 255, 255, 0.15)',
       },
       transitionDuration: {
-        'theme': '600ms',
+        'theme': '300ms',
         'fast': '150ms',
         'normal': '200ms',
         'slow': '300ms',
@@ -95,6 +121,7 @@ module.exports = {
         'theme': 'cubic-bezier(0.4, 0, 0.2, 1)',
         'bounce': 'cubic-bezier(0.68, -0.55, 0.265, 1.55)',
         'smooth': 'cubic-bezier(0.25, 0.1, 0.25, 1)',
+        'apple-spring': 'cubic-bezier(0.25, 1, 0.5, 1)',
       },
       keyframes: {
         "accordion-down": {
@@ -151,10 +178,37 @@ module.exports = {
         "count-up": "count-up 0.8s ease-out",
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: [
+          '-apple-system',
+          'BlinkMacSystemFont',
+          '"SF Pro Text"',
+          '"SF Pro Display"',
+          'Inter',
+          'system-ui',
+          'sans-serif',
+        ],
+        display: [
+          '-apple-system',
+          'BlinkMacSystemFont',
+          '"SF Pro Display"',
+          'Inter',
+          'system-ui',
+          'sans-serif',
+        ],
       },
       fontSize: {
         '2xs': '0.625rem',
+        'xs': ['0.75rem', { lineHeight: '1rem', letterSpacing: '0.01em' }],
+        'sm': ['0.875rem', { lineHeight: '1.25rem', letterSpacing: '-0.005em' }],
+        'base': ['1rem', { lineHeight: '1.5rem', letterSpacing: '-0.011em' }],
+        'lg': ['1.125rem', { lineHeight: '1.625rem', letterSpacing: '-0.014em' }],
+        'xl': ['1.25rem', { lineHeight: '1.75rem', letterSpacing: '-0.017em' }],
+        '2xl': ['1.5rem', { lineHeight: '2rem', letterSpacing: '-0.021em' }],
+        '3xl': ['1.875rem', { lineHeight: '2.25rem', letterSpacing: '-0.022em' }],
+        '4xl': ['2.25rem', { lineHeight: '2.625rem', letterSpacing: '-0.024em' }],
+      },
+      borderWidth: {
+        'hairline': '0.5px',
       },
       spacing: {
         '18': '4.5rem',

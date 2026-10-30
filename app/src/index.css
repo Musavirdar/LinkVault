@@ -5,102 +5,106 @@
 @layer base {
 
   /* Dark Theme (Default) */
-  :root {
-    --background: 220 9% 13%;
-    --foreground: 0 0% 100%;
-    --card: 220 7% 17%;
-    --card-foreground: 0 0% 100%;
-    --popover: 220 7% 17%;
-    --popover-foreground: 0 0% 100%;
-    --primary: 235 86% 65%;
+  :root,
+  [data-theme="dark"],
+  .dark {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 96%;
+    --card: 240 3% 11%;
+    --card-foreground: 0 0% 96%;
+    --popover: 240 3% 11%;
+    --popover-foreground: 0 0% 96%;
+    --primary: 211 100% 50%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 220 7% 22%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 220 7% 22%;
-    --muted-foreground: 214 8% 46%;
-    --accent: 235 86% 65%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 358 68% 59%;
+    --secondary: 240 3% 17%;
+    --secondary-foreground: 0 0% 96%;
+    --muted: 240 3% 17%;
+    --muted-foreground: 240 2% 55%;
+    --accent: 211 100% 16%;
+    --accent-foreground: 211 100% 65%;
+    --destructive: 4 100% 61%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 9% 13%;
-    --input: 220 7% 22%;
-    --ring: 235 86% 65%;
-    --radius: 0.5rem;
+    --border: 240 3% 20%;
+    --input: 240 3% 20%;
+    --ring: 211 100% 50%;
+    --radius: 1.125rem;
 
-    /* Custom theme variables */
-    --bg-primary: #202225;
-    --bg-secondary: #2F3136;
-    --bg-tertiary: #36393F;
-    --bg-floating: #40444B;
-    --text-primary: #FFFFFF;
-    --text-secondary: #B9BBBE;
-    --text-muted: #72767D;
-    --accent-primary: #5865F2;
-    --accent-hover: #4752C4;
-    --accent-success: #3BA55D;
-    --accent-warning: #FAA61A;
-    --accent-danger: #ED4245;
-    --border-subtle: #202225;
-    --border-strong: #40444B;
+    /* Custom Apple theme variables - Dark */
+    --bg-primary: #000000;
+    --bg-secondary: #1C1C1E;
+    --bg-tertiary: #2C2C2E;
+    --bg-floating: #242426;
+    --text-primary: #F5F5F7;
+    --text-secondary: #98989D;
+    --text-muted: #86868B;
+    --accent-primary: #0071E3;
+    --accent-hover: #0A84FF;
+    --accent-success: #30D158;
+    --accent-warning: #FF9F0A;
+    --accent-danger: #FF453A;
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.16);
 
-    --sidebar-background: 220 7% 17%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 235 86% 65%;
+    --sidebar-background: 240 3% 11%;
+    --sidebar-foreground: 0 0% 96%;
+    --sidebar-primary: 211 100% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 7% 22%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 220 9% 13%;
-    --sidebar-ring: 235 86% 65%;
+    --sidebar-accent: 240 3% 17%;
+    --sidebar-accent-foreground: 0 0% 96%;
+    --sidebar-border: 240 3% 20%;
+    --sidebar-ring: 211 100% 50%;
   }
 
   /* Light Theme */
-  [data-theme="light"] {
-    --background: 220 9% 95%;
-    --foreground: 220 9% 18%;
+  [data-theme="light"],
+  .light {
+    --background: 240 5% 96%;
+    --foreground: 240 6% 12%;
     --card: 0 0% 100%;
-    --card-foreground: 220 9% 18%;
+    --card-foreground: 240 6% 12%;
     --popover: 0 0% 100%;
-    --popover-foreground: 220 9% 18%;
-    --primary: 235 86% 65%;
+    --popover-foreground: 240 6% 12%;
+    --primary: 211 100% 45%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 220 9% 90%;
-    --secondary-foreground: 220 9% 18%;
-    --muted: 220 9% 90%;
-    --muted-foreground: 220 9% 45%;
-    --accent: 235 86% 65%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 358 68% 59%;
+    --secondary: 240 5% 92%;
+    --secondary-foreground: 240 6% 12%;
+    --muted: 240 5% 92%;
+    --muted-foreground: 240 2% 51%;
+    --accent: 211 100% 96%;
+    --accent-foreground: 211 100% 45%;
+    --destructive: 3 100% 59%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 9% 88%;
-    --input: 220 9% 88%;
-    --ring: 235 86% 65%;
+    --border: 240 6% 90%;
+    --input: 240 6% 90%;
+    --ring: 211 100% 45%;
+    --radius: 1.125rem;
 
-    --bg-primary: #F2F3F5;
+    /* Custom Apple theme variables - Light */
+    --bg-primary: #F5F5F7;
     --bg-secondary: #FFFFFF;
-    --bg-tertiary: #E3E5E8;
-    --bg-floating: #EBEDEF;
-    --text-primary: #2E3338;
-    --text-secondary: #4F5660;
-    --text-muted: #747F8D;
-    --accent-primary: #5865F2;
-    --accent-hover: #4752C4;
-    --accent-success: #3BA55D;
-    --accent-warning: #FAA61A;
-    --accent-danger: #ED4245;
-    --border-subtle: #E3E5E8;
-    --border-strong: #C9CCD0;
+    --bg-tertiary: #F0EDEF;
+    --bg-floating: #FFFFFF;
+    --text-primary: #1D1D1F;
+    --text-secondary: #6E6E73;
+    --text-muted: #86868B;
+    --accent-primary: #0071E3;
+    --accent-hover: #0077ED;
+    --accent-success: #34C759;
+    --accent-warning: #FF9500;
+    --accent-danger: #FF3B30;
+    --border-subtle: rgba(0, 0, 0, 0.06);
+    --border-strong: rgba(0, 0, 0, 0.12);
 
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 220 9% 18%;
-    --sidebar-primary: 235 86% 65%;
+    --sidebar-foreground: 240 6% 12%;
+    --sidebar-primary: 211 100% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 9% 95%;
-    --sidebar-accent-foreground: 220 9% 18%;
-    --sidebar-border: 220 9% 88%;
-    --sidebar-ring: 235 86% 65%;
+    --sidebar-accent: 240 5% 92%;
+    --sidebar-accent-foreground: 240 6% 12%;
+    --sidebar-border: 240 6% 90%;
+    --sidebar-ring: 211 100% 45%;
   }
 }
-
 
 @layer base {
   * {
@@ -113,33 +117,33 @@
 
   body {
     @apply bg-[var(--bg-primary)] text-[var(--text-primary)] antialiased;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    transition: background-color 300ms ease-in-out, color 300ms ease-in-out;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", 'Inter', system-ui, sans-serif;
+    transition: background-color 200ms ease, color 200ms ease;
   }
 }
 
 @layer utilities {
 
-  /* ── Glassmorphism ── */
+  /* ── Apple Glassmorphism ── */
   .glass {
-    background: rgba(255, 255, 255, 0.04);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: rgba(28, 28, 30, 0.72);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
   }
   .glass-strong {
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(32px) saturate(200%);
-    -webkit-backdrop-filter: blur(32px) saturate(200%);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(28, 28, 30, 0.85);
+    backdrop-filter: blur(36px) saturate(190%);
+    -webkit-backdrop-filter: blur(36px) saturate(190%);
+    border: 1px solid rgba(255, 255, 255, 0.14);
   }
-  [data-theme="light"] .glass {
-    background: rgba(255, 255, 255, 0.55);
-    border: 1px solid rgba(255, 255, 255, 0.7);
+  [data-theme="light"] .glass, .light .glass {
+    background: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(0, 0, 0, 0.06);
   }
-  [data-theme="light"] .glass-strong {
-    background: rgba(255, 255, 255, 0.8);
-    border: 1px solid rgba(255, 255, 255, 0.9);
+  [data-theme="light"] .glass-strong, .light .glass-strong {
+    background: rgba(255, 255, 255, 0.88);
+    border: 1px solid rgba(0, 0, 0, 0.09);
   }
 
   /* ── Gradient Text ── */
@@ -156,23 +160,26 @@
     background-clip: text;
   }
 
-  /* ── Premium Glow Shadows ── */
-  .shadow-soft { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18); }
-  .shadow-glow { box-shadow: 0 0 40px rgba(99, 102, 241, 0.18); }
-  .shadow-glow-sm { box-shadow: 0 0 16px rgba(99, 102, 241, 0.25); }
-  .shadow-elevated { box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4), 0 4px 16px rgba(0, 0, 0, 0.25); }
-  .shadow-card { box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.08); }
+  /* ── Apple Soft & Elevated Shadows ── */
+  .shadow-soft { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04); }
+  .shadow-glow { box-shadow: 0 0 32px rgba(0, 113, 227, 0.25); }
+  .shadow-glow-sm { box-shadow: 0 0 16px rgba(0, 113, 227, 0.2); }
+  .shadow-elevated { box-shadow: 0 16px 36px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04); }
+  .shadow-card { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02); }
+  [data-theme="dark"] .shadow-card, .dark .shadow-card {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.2);
+  }
 
-  /* ── Premium Card ── */
+  /* ── Apple Premium Squircle Card (18-20px radius) ── */
   .card-premium {
     background: var(--bg-secondary);
     border: 1px solid var(--border-subtle);
-    border-radius: 1rem;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
-    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    border-radius: 1.125rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+    transition: box-shadow 0.2s cubic-bezier(0.25, 1, 0.5, 1), transform 0.2s cubic-bezier(0.25, 1, 0.5, 1);
   }
   .card-premium:hover {
-    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(99, 102, 241, 0.15);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.07), 0 0 0 1px rgba(0, 113, 227, 0.15);
     transform: translateY(-1px);
   }
 
