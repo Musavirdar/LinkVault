@@ -173,12 +173,12 @@ export const AgentPage: React.FC = () => {
   };
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-6 animate-in fade-in duration-200">
+    <div className="w-full max-w-[1100px] mx-auto space-y-6 animate-in fade-in duration-200">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border-primary pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-black/[0.06] dark:border-white/10 pb-5">
         <div>
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-accent-primary/10 text-accent-primary">
+            <div className="p-3 rounded-2xl bg-[#0071E3]/10 text-[#0071E3] dark:text-[#0A84FF] border border-[#0071E3]/20 flex items-center justify-center">
               <Bot className="w-7 h-7" />
             </div>
             <div>
@@ -193,10 +193,10 @@ export const AgentPage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="px-3 py-1 text-xs font-semibold rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/30">
+          <span className="px-3 py-1 text-xs font-semibold rounded-full bg-[#0071E3]/10 text-[#0071E3] dark:text-[#0A84FF] border border-[#0071E3]/20">
             Powered by Meta Llama 3.3
           </span>
-          <span className="px-3 py-1 text-xs font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
+          <span className="px-3 py-1 text-xs font-semibold rounded-full bg-[#34C759]/10 text-[#34C759] border border-[#34C759]/20 flex items-center gap-1.5">
             <Shield className="w-3.5 h-3.5" />
             <span>Verifiable Agent</span>
           </span>

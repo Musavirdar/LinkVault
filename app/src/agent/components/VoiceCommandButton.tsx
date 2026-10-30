@@ -88,10 +88,10 @@ export const VoiceCommandButton: React.FC<VoiceCommandButtonProps> = ({
         onClick={toggleRecording}
         disabled={disabled}
         title={isRecording ? 'Click to stop listening' : 'Click to speak voice command (uses browser speech recognition)'}
-        className={`relative p-2.5 rounded-lg border transition-all duration-200 flex items-center justify-center ${
+        className={`relative p-2.5 rounded-xl border min-h-[44px] min-w-[44px] transition-all duration-150 active:scale-95 flex items-center justify-center ${
           isRecording
             ? 'bg-red-500/20 text-red-500 border-red-500/40 animate-pulse'
-            : 'bg-bg-tertiary hover:bg-bg-secondary text-text-secondary hover:text-text-primary border-border-primary'
+            : 'bg-black/[0.04] dark:bg-white/10 hover:bg-black/[0.08] dark:hover:bg-white/15 text-muted-foreground hover:text-foreground border-black/[0.06] dark:border-white/10'
         }`}
       >
         {isRecording ? (
