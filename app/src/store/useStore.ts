@@ -66,7 +66,7 @@ export const useStore = create<AppState>()(
 
       // Layout
       sidebarCollapsed: false,
-      activityPanelCollapsed: false,
+      activityPanelCollapsed: true,
       toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
       toggleActivityPanel: () => set((state) => ({ activityPanelCollapsed: !state.activityPanelCollapsed })),
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),

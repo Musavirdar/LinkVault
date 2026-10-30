@@ -221,9 +221,16 @@ export function ChannelSidebar() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <span className="font-semibold text-text-primary">
-              {activeWorkspaceData?.name ?? 'LinkVault'}
-            </span>
+            <div className="flex items-center gap-2">
+              <img
+                alt="LinkVault Logo"
+                className="h-5 w-auto object-contain"
+                src="https://lh3.googleusercontent.com/aida/AEtjO1UbcIUStZ-tEXrVwMgFcaav3KfhdgICONmzYt_ToqD3l-T0tPzgHcI9k8F76U7pDjTFWbaPw4_sD7IDBSW3HikuZEV4GwW-xfKkT9YPeo5PYWovV-VucNeTaG4rFr9V_0E5B_fuZimAh3bpdzprVPzhXd3fFRjwGvpcsaJU-c1umqXWTyXFuO0EQgYcOvx2cQxdDXUbcgETOUN6uyqBO_VE4G_XgDCL7PbbE0EIUFw"
+              />
+              <span className="font-semibold text-[15px] tracking-tight text-text-primary">
+                {activeWorkspaceData?.name ?? 'LinkVault'}
+              </span>
+            </div>
             {isTeam && (
               <span
                 className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full"

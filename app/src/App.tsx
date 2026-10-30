@@ -29,7 +29,13 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
-  const { token, setPermissions } = useStore();
+  const { token, setPermissions, theme } = useStore();
+
+  // Sync theme with document element
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+  }, [theme]);
 
   // Bootstrap permissions from stored token on page refresh
   useEffect(() => {
