@@ -35,6 +35,88 @@ public class MetaLlamaClient : IMetaLlamaClient
         return envKey ?? string.Empty;
     }
 
+    public static (bool IsValid, string? Error) ValidateToolArguments(string toolName, string argsJson)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(argsJson);
+            var root = doc.RootElement;
+            if (root.ValueKind != JsonValueKind.Object)
+                return (false, $"Tool '{toolName}' arguments must be a JSON object.");
+
+            switch (toolName)
+            {
+                case "create_directory":
+                    if (!root.TryGetProperty("name", out var nameProp) || nameProp.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(nameProp.GetString()))
+                        return (false, "Tool 'create_directory' requires non-empty string parameter 'name'.");
+                    if (nameProp.GetString()!.Length > 100)
+                        return (false, "Tool 'create_directory' parameter 'name' cannot exceed 100 characters.");
+                    if (root.TryGetProperty("parentDirectoryId", out var pDirProp) && pDirProp.ValueKind != JsonValueKind.Null)
+                    {
+                        if (pDirProp.ValueKind != JsonValueKind.String || !Guid.TryParse(pDirProp.GetString(), out _))
+                            return (false, "Tool 'create_directory' parameter 'parentDirectoryId' must be a valid GUID.");
+                    }
+                    break;
+
+                case "move_resource":
+                    if (!root.TryGetProperty("resourceId", out var rProp) || rProp.ValueKind != JsonValueKind.String || !Guid.TryParse(rProp.GetString(), out var rGuid) || rGuid == Guid.Empty)
+                        return (false, "Tool 'move_resource' requires a valid non-empty GUID parameter 'resourceId'.");
+                    if (root.TryGetProperty("targetDirectoryId", out var tProp) && tProp.ValueKind != JsonValueKind.Null)
+                    {
+                        if (tProp.ValueKind != JsonValueKind.String || !Guid.TryParse(tProp.GetString(), out _))
+                            return (false, "Tool 'move_resource' parameter 'targetDirectoryId' must be a valid GUID.");
+                    }
+                    break;
+
+                case "create_share_link":
+                    if (!root.TryGetProperty("resourceId", out var sProp) || sProp.ValueKind != JsonValueKind.String || !Guid.TryParse(sProp.GetString(), out var sGuid) || sGuid == Guid.Empty)
+                        return (false, "Tool 'create_share_link' requires a valid non-empty GUID parameter 'resourceId'.");
+                    if (root.TryGetProperty("expiryDays", out var expProp) && expProp.ValueKind != JsonValueKind.Null)
+                    {
+                        if (expProp.ValueKind != JsonValueKind.Number || expProp.GetInt32() < 1 || expProp.GetInt32() > 365)
+                            return (false, "Tool 'create_share_link' parameter 'expiryDays' must be an integer between 1 and 365.");
+                    }
+                    if (root.TryGetProperty("maxDownloads", out var maxDProp) && maxDProp.ValueKind != JsonValueKind.Null)
+                    {
+                        if (maxDProp.ValueKind != JsonValueKind.Number || maxDProp.GetInt32() < 1)
+                            return (false, "Tool 'create_share_link' parameter 'maxDownloads' must be a positive integer.");
+                    }
+                    break;
+
+                case "search":
+                    if (!root.TryGetProperty("query", out var qProp) || qProp.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(qProp.GetString()))
+                        return (false, "Tool 'search' requires non-empty string parameter 'query'.");
+                    break;
+
+                case "list_directory":
+                    if (root.TryGetProperty("directoryId", out var lProp) && lProp.ValueKind != JsonValueKind.Null)
+                    {
+                        if (lProp.ValueKind != JsonValueKind.String || !Guid.TryParse(lProp.GetString(), out _))
+                            return (false, "Tool 'list_directory' parameter 'directoryId' must be a valid GUID.");
+                    }
+                    break;
+
+                case "delete_resource":
+                    if (!root.TryGetProperty("resourceId", out var delProp) || delProp.ValueKind != JsonValueKind.String || !Guid.TryParse(delProp.GetString(), out var delGuid) || delGuid == Guid.Empty)
+                        return (false, "Tool 'delete_resource' requires a valid non-empty GUID parameter 'resourceId'.");
+                    break;
+
+                case "classify_image":
+                    // Optional parameters
+                    break;
+
+                default:
+                    return (false, $"Unrecognized tool name '{toolName}'.");
+            }
+
+            return (true, null);
+        }
+        catch (JsonException ex)
+        {
+            return (false, $"Malformed JSON arguments for tool '{toolName}': {ex.Message}");
+        }
+    }
+
     public async Task<LlamaPlanResult> GenerateToolPlanAsync(string userGoal, object? context = null, CancellationToken cancellationToken = default)
     {
         var apiKey = ResolveApiKey();
@@ -42,19 +124,21 @@ public class MetaLlamaClient : IMetaLlamaClient
         if (string.IsNullOrWhiteSpace(apiKey))
         {
             _logger.LogInformation("No Meta Llama API key configured. Executing intelligent local planning fallback for goal: {Goal}", userGoal);
-            return GenerateLocalFallbackPlan(userGoal, context);
+            var fallback = GenerateLocalFallbackPlan(userGoal, context);
+            ValidateAndCapPlan(fallback);
+            return fallback;
         }
 
         try
         {
             var systemPrompt = @"You are the LinkVault Verifiable Workspace Agent.
-Decompose the user's workspace request into a sequence of tool calls.
+Decompose the user's workspace request into a sequence of tool calls (maximum 10 steps).
 Available tools:
 - list_directory(directoryId?: string)
 - search(query: string)
 - create_directory(name: string, parentDirectoryId?: string)
 - move_resource(resourceId: string, targetDirectoryId?: string)
-- create_share_link(resourceId: string, expiryDays?: int)
+- create_share_link(resourceId: string, expiryDays?: int, password?: string, maxDownloads?: int)
 
 Respond with precise tool calls. Every move, share, or folder creation must be an individual step.";
 
@@ -77,7 +161,9 @@ Respond with precise tool calls. Every move, share, or folder creation must be a
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogWarning("Meta Llama remote API returned status {StatusCode}. Falling back to local plan generation.", response.StatusCode);
-                return GenerateLocalFallbackPlan(userGoal, context);
+                var fallback = GenerateLocalFallbackPlan(userGoal, context);
+                ValidateAndCapPlan(fallback);
+                return fallback;
             }
 
             var responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -98,16 +184,44 @@ Respond with precise tool calls. Every move, share, or folder creation must be a
             var summary = choice?["content"]?.ToString() ?? $"Synthesized plan containing {toolCallsList.Count} step(s).";
             if (toolCallsList.Count == 0)
             {
-                // If model responded in text without tool calling protocol, use fallback extraction
-                return GenerateLocalFallbackPlan(userGoal, context);
+                var fallback = GenerateLocalFallbackPlan(userGoal, context);
+                ValidateAndCapPlan(fallback);
+                return fallback;
             }
 
-            return new LlamaPlanResult(summary, toolCallsList);
+            var plan = new LlamaPlanResult(summary, toolCallsList);
+            ValidateAndCapPlan(plan);
+            return plan;
+        }
+        catch (ArgumentException)
+        {
+            throw;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error calling Meta Llama endpoint. Using local fallback.");
-            return GenerateLocalFallbackPlan(userGoal, context);
+            var fallback = GenerateLocalFallbackPlan(userGoal, context);
+            ValidateAndCapPlan(fallback);
+            return fallback;
+        }
+    }
+
+    private static void ValidateAndCapPlan(LlamaPlanResult plan)
+    {
+        // Enforce maximum 10-step cap
+        if (plan.ToolCalls.Count > 10)
+        {
+            plan.ToolCalls.RemoveRange(10, plan.ToolCalls.Count - 10);
+        }
+
+        // Validate each tool call against per-tool schema using TryGetProperty
+        foreach (var call in plan.ToolCalls)
+        {
+            var (isValid, error) = ValidateToolArguments(call.ToolName, call.ArgumentsJson);
+            if (!isValid)
+            {
+                throw new ArgumentException($"Plan schema validation failed: {error}");
+            }
         }
     }
 
@@ -117,7 +231,6 @@ Respond with precise tool calls. Every move, share, or folder creation must be a
 
         if (string.IsNullOrWhiteSpace(apiKey))
         {
-            // Deterministic local moderation heuristic
             return EvaluateLocalGuard(content);
         }
 
@@ -258,23 +371,15 @@ Snippet:
             var targetFolder = lower.Contains("invoice") ? "Invoices" : (lower.Contains("finance") ? "Finance" : "Organized");
             
             toolCalls.Add(new LlamaToolCall("create_directory", 
-                JsonSerializer.Serialize(new { name = targetFolder, parentDirectoryId = (string?)null }),
+                JsonSerializer.Serialize(new { name = targetFolder }),
                 $"Create '{targetFolder}' directory"));
 
-            toolCalls.Add(new LlamaToolCall("move_resource",
-                JsonSerializer.Serialize(new { resourceName = "invoice", targetDirectory = targetFolder }),
-                $"Move matching files to '{targetFolder}'"));
-
-            if (lower.Contains("share"))
-            {
-                var days = lower.Contains("7") ? 7 : (lower.Contains("30") ? 30 : 1);
-                toolCalls.Add(new LlamaToolCall("create_share_link",
-                    JsonSerializer.Serialize(new { resourceName = "invoice", expiryDays = days }),
-                    $"Generate {days}-day secure share link"));
-            }
+            toolCalls.Add(new LlamaToolCall("search",
+                JsonSerializer.Serialize(new { query = targetFolder }),
+                $"Search for '{targetFolder}' resources to organize"));
 
             return new LlamaPlanResult(
-                $"Identified organization intent. Propose creating directory '{targetFolder}', moving matching files, and applying requested actions.",
+                $"Identified organization intent. Propose creating directory '{targetFolder}' and searching matching files.",
                 toolCalls);
         }
 
@@ -289,23 +394,9 @@ Snippet:
                 JsonSerializer.Serialize(new { name = "Diagrams & Mockups" }),
                 "Create visual asset folder 'Diagrams & Mockups'"));
 
-            toolCalls.Add(new LlamaToolCall("move_resource",
-                JsonSerializer.Serialize(new { targetDirectory = "Diagrams & Mockups" }),
-                "File visual assets into categorized folder"));
-
             return new LlamaPlanResult(
-                "Multimodal image intent detected. Propose classifying images with Llama 3.2 Vision and sorting them into categorized directories.",
+                "Multimodal image intent detected. Propose classifying images with Llama 3.2 Vision and creating categorized folder.",
                 toolCalls);
-        }
-
-        // Scenario: Share file
-        if (lower.Contains("share"))
-        {
-            toolCalls.Add(new LlamaToolCall("create_share_link",
-                JsonSerializer.Serialize(new { query = userGoal, expiryDays = 7 }),
-                "Create secure share link"));
-
-            return new LlamaPlanResult("Create share link for specified resource.", toolCalls);
         }
 
         // Scenario: Search / List
@@ -350,7 +441,7 @@ Snippet:
         if (content.Contains("eyJhbGciOi", StringComparison.Ordinal))
         {
             threats.Add("Exposed JWT Token");
-            score = Math.Max(score, 80);
+            score = Math.Max(score, 85);
         }
 
         var isSafe = score < 60;

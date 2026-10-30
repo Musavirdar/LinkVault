@@ -87,11 +87,12 @@ public class VaultAgentServiceTests
             UserGoal = "Organize my invoices into an Invoices folder and share the latest invoice for 7 days"
         };
 
+        var dummyResourceId = Guid.NewGuid();
         var fakeToolCalls = new List<LlamaToolCall>
         {
             new("create_directory", "{\"name\":\"Invoices\"}", "Create folder 'Invoices'"),
-            new("move_resource", "{\"resourceName\":\"invoice\",\"targetDirectory\":\"Invoices\"}", "Move invoices"),
-            new("create_share_link", "{\"resourceName\":\"invoice\",\"expiryDays\":7}", "Share invoice for 7 days")
+            new("move_resource", $"{{\"resourceId\":\"{dummyResourceId}\"}}", "Move invoices"),
+            new("create_share_link", $"{{\"resourceId\":\"{dummyResourceId}\",\"expiryDays\":7}}", "Share invoice for 7 days")
         };
 
         _mockLlamaClient
@@ -193,3 +194,4 @@ public class VaultAgentServiceTests
         updated.ApprovedAt.Should().NotBeNull();
     }
 }
+

@@ -3,6 +3,7 @@ using LinkVaultApi.Agent.Models;
 using LinkVaultApi.Agent.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace LinkVaultApi.Agent.Controllers;
 
@@ -32,6 +33,7 @@ public class AgentController : ControllerBase
     }
 
     [HttpPost("plan")]
+    [EnableRateLimiting("agent_plan")]
     public async Task<ActionResult<AgentPlanResponse>> CreatePlan([FromBody] CreatePlanRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.UserGoal))
@@ -41,6 +43,10 @@ public class AgentController : ControllerBase
         {
             var plan = await _agentService.GeneratePlanAsync(request, User);
             return Ok(plan);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { error = ex.Message });
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -73,9 +79,13 @@ public class AgentController : ControllerBase
         {
             return NotFound(new { error = ex.Message });
         }
-        catch (UnauthorizedAccessException ex)
+        catch (UnauthorizedAccessException)
         {
             return Forbid();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(StatusCodes.Status409Conflict, new { error = ex.Message });
         }
         catch (Exception ex)
         {
@@ -96,9 +106,13 @@ public class AgentController : ControllerBase
         {
             return NotFound(new { error = ex.Message });
         }
-        catch (UnauthorizedAccessException ex)
+        catch (UnauthorizedAccessException)
         {
             return Forbid();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(StatusCodes.Status409Conflict, new { error = ex.Message });
         }
         catch (Exception ex)
         {

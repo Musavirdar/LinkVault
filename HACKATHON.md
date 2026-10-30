@@ -62,17 +62,22 @@ Rather than basic Retrieval-Augmented Generation (RAG) that merely summarizes te
 - `backend/LinkVaultApi.Tests/Unit/VaultAgentServiceTests.cs`: Planning loop, tool decomposition, and unauthenticated boundary enforcement.
 - `backend/LinkVaultApi.Tests/Unit/AgentApprovalAndAuditTests.cs`: Approval gating, plan rejection, and `via agent` audit attribution.
 - `backend/LinkVaultApi.Tests/Unit/SafeShareGuardTests.cs`: Credential detection (Postgres passwords, private keys, AWS keys, JWTs) and sharing blocks.
+- `backend/LinkVaultApi.Tests/Unit/AgentHardeningTests.cs`: Concurrency & security hardening tests (atomic double approval 409, unauthorized approval denial, Viewer claim enforcement, missing resourceId rejection, and cross-tenant entity isolation).
 
 ---
 
 ## 🛡️ Hackathon Security Hardening Highlights
 
-During the hackathon development cycle, the foundational repository was also hardened to enterprise standards:
-1. **Single-Use Download Tickets**: Replaced raw file URLs with cryptographic, single-use, time-bound tickets (`/api/files/ticket/{id}/stream`).
-2. **Safe Share Guardrail**: Pre-share scanning blocks accidental sharing of connection strings and private tokens.
-3. **Client IP Spoofing Elimination**: Removed insecure proxy clearing, applied `ForwardLimit = 1` for Render platform headers.
-4. **Credential Purge**: Sanitized committed environment files (`.env.render`) and enforced `.gitignore` exclusions.
-5. **Zero-Trust File Upload Validation**: Magic byte signature inspection and extension sanitization.
+During the hackathon development cycle, the foundational repository and workspace agent were hardened to enterprise security standards:
+1. **Agent Concurrency & Atomic Plan Gating**: `ApprovePlanAsync` uses atomic `ExecuteUpdateAsync` gating to eliminate race conditions and return HTTP 409 Conflict on double approvals; background step execution runs inside isolated `IServiceScopeFactory` scopes.
+2. **Zero-Trust Tool Gating & RBAC Claim Verification**: Every state-altering tool inspects caller claims (`canUpload`, `canUpdate`, `canShare`, `canDelete`) and strictly validates organization tenant boundaries, eliminating unsafe first-resource fallbacks.
+3. **Model Schema Validation & Plan Boundaries**: Model tool outputs are strictly parsed with `TryGetProperty` against per-tool schemas, malformed plans are rejected upfront (HTTP 400), and plans are capped at 10 steps.
+4. **Standardized Share Issuance & Rate Limiting**: Agent share link generation reuses enterprise `ShareController` cryptographic tokens and options, and `POST /api/agent/plan` is protected with per-user rate limiting (10 req/min).
+5. **Single-Use Download Tickets**: Replaced raw file URLs with cryptographic, single-use, time-bound tickets (`/api/files/ticket/{id}/stream`).
+6. **Safe Share Guardrail**: Pre-share scanning blocks accidental sharing of connection strings and private tokens.
+7. **Client IP Spoofing Elimination**: Removed insecure proxy clearing, applied `ForwardLimit = 1` for Render platform headers.
+8. **Credential Purge**: Sanitized committed environment files (`.env.render`) and enforced `.gitignore` exclusions.
+9. **Zero-Trust File Upload Validation**: Magic byte signature inspection and extension sanitization.
 
 ---
 
@@ -81,3 +86,4 @@ During the hackathon development cycle, the foundational repository was also har
 In accordance with hackathon guidelines, all commits are small, sequential, and untampered:
 - **Baseline Tag**: [`pre-hackathon`](https://github.com/Musavirdar/LinkVault/tree/pre-hackathon) (Commit `d69b3ed`)
 - **Final Compare**: [Compare Changes](https://github.com/Musavirdar/LinkVault/compare/pre-hackathon...main)
+

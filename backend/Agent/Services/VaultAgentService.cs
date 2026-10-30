@@ -7,6 +7,7 @@ using LinkVaultApi.Models;
 using LinkVaultApi.Services;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace LinkVaultApi.Agent.Services;
 
@@ -17,6 +18,7 @@ public class VaultAgentService : IVaultAgentService
     private readonly ISafeShareGuard _safeShareGuard;
     private readonly IStorageProvider _storageProvider;
     private readonly IHubContext<AgentHub> _hubContext;
+    private readonly IServiceScopeFactory? _scopeFactory;
     private readonly ILogger<VaultAgentService> _logger;
 
     public VaultAgentService(
@@ -26,12 +28,25 @@ public class VaultAgentService : IVaultAgentService
         IStorageProvider storageProvider,
         IHubContext<AgentHub> hubContext,
         ILogger<VaultAgentService> logger)
+        : this(dbContext, llamaClient, safeShareGuard, storageProvider, hubContext, null, logger)
+    {
+    }
+
+    public VaultAgentService(
+        LinkVaultDbContext dbContext,
+        IMetaLlamaClient llamaClient,
+        ISafeShareGuard safeShareGuard,
+        IStorageProvider storageProvider,
+        IHubContext<AgentHub> hubContext,
+        IServiceScopeFactory? scopeFactory,
+        ILogger<VaultAgentService> logger)
     {
         _dbContext = dbContext;
         _llamaClient = llamaClient;
         _safeShareGuard = safeShareGuard;
         _storageProvider = storageProvider;
         _hubContext = hubContext;
+        _scopeFactory = scopeFactory;
         _logger = logger;
     }
 
@@ -47,6 +62,13 @@ public class VaultAgentService : IVaultAgentService
         return (userId, orgId, role);
     }
 
+    private static bool HasUserPermission(ClaimsPrincipal user, string claimName)
+    {
+        if (user.IsInRole("Admin")) return true;
+        return user.HasClaim(c => c.Type.Equals(claimName, StringComparison.OrdinalIgnoreCase) &&
+                                  c.Value.Equals("true", StringComparison.OrdinalIgnoreCase));
+    }
+
     public async Task<AgentPlanResponse> GeneratePlanAsync(CreatePlanRequest request, ClaimsPrincipal user, CancellationToken cancellationToken = default)
     {
         var (userId, orgId, role) = ExtractUserIdentity(user);
@@ -56,6 +78,19 @@ public class VaultAgentService : IVaultAgentService
         }
 
         var planResult = await _llamaClient.GenerateToolPlanAsync(request.UserGoal, null, cancellationToken);
+
+        // Enforce maximum 10-step cap
+        var toolCalls = planResult.ToolCalls.Take(10).ToList();
+
+        // Validate each tool call against per-tool schema before creating plan
+        foreach (var call in toolCalls)
+        {
+            var (isValid, error) = MetaLlamaClient.ValidateToolArguments(call.ToolName, call.ArgumentsJson);
+            if (!isValid)
+            {
+                throw new ArgumentException($"Plan schema validation failed for tool '{call.ToolName}': {error}");
+            }
+        }
 
         var plan = new AgentActionPlan
         {
@@ -68,7 +103,7 @@ public class VaultAgentService : IVaultAgentService
         };
 
         int stepNumber = 1;
-        foreach (var call in planResult.ToolCalls)
+        foreach (var call in toolCalls)
         {
             var isStateAltering = call.ToolName is "move_resource" or "create_directory" or "create_share_link" or "delete_resource";
             plan.Steps.Add(new PlanStep
@@ -95,7 +130,6 @@ public class VaultAgentService : IVaultAgentService
             throw new UnauthorizedAccessException("User not authenticated");
 
         var plan = await _dbContext.AgentActionPlans
-            .Include(p => p.Steps)
             .FirstOrDefaultAsync(p => p.Id == planId && p.OrganizationId == orgId.Value, cancellationToken);
 
         if (plan == null)
@@ -104,9 +138,35 @@ public class VaultAgentService : IVaultAgentService
         if (plan.UserId != userId.Value && role != "Admin")
             throw new UnauthorizedAccessException("You do not have permission to approve this plan.");
 
-        plan.Status = PlanStatus.Executing;
-        plan.ApprovedAt = DateTime.UtcNow;
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        int rowsUpdated;
+        if (_dbContext.Database.IsRelational())
+        {
+            rowsUpdated = await _dbContext.AgentActionPlans
+                .Where(p => p.Id == planId && p.OrganizationId == orgId.Value && p.Status == PlanStatus.AwaitingApproval)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(p => p.Status, PlanStatus.Executing)
+                    .SetProperty(p => p.ApprovedAt, DateTime.UtcNow),
+                    cancellationToken);
+        }
+        else
+        {
+            // InMemory provider support for unit test environments
+            if (plan.Status == PlanStatus.AwaitingApproval)
+            {
+                plan.Status = PlanStatus.Executing;
+                plan.ApprovedAt = DateTime.UtcNow;
+                rowsUpdated = await _dbContext.SaveChangesAsync(cancellationToken);
+            }
+            else
+            {
+                rowsUpdated = 0;
+            }
+        }
+
+        if (rowsUpdated == 0)
+        {
+            throw new InvalidOperationException("Plan is not in AwaitingApproval status or has already been processed.");
+        }
 
         var groupName = AgentHub.GetGroupName(plan.Id);
         await _hubContext.Clients.Group(groupName).SendAsync("OnPlanStatusChanged", new
@@ -116,10 +176,18 @@ public class VaultAgentService : IVaultAgentService
             message = "Plan approved. Executing steps..."
         }, cancellationToken);
 
-        // Execute steps sequentially in background/inline
+        // Execute steps sequentially in an isolated service scope
+        var userClone = user.Clone();
         _ = Task.Run(async () =>
         {
-            await ExecutePlanStepsAsync(plan.Id, orgId.Value, userId.Value);
+            try
+            {
+                await ExecutePlanStepsAsync(plan.Id, orgId.Value, userId.Value, userClone);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Background step execution failed for plan {PlanId}", plan.Id);
+            }
         });
 
         return new ApprovePlanResponse
@@ -143,12 +211,40 @@ public class VaultAgentService : IVaultAgentService
         if (plan == null)
             throw new KeyNotFoundException($"Plan {planId} not found.");
 
-        plan.Status = PlanStatus.Rejected;
+        if (plan.UserId != userId.Value && role != "Admin")
+            throw new UnauthorizedAccessException("You do not have permission to reject this plan.");
+
+        int rowsUpdated;
+        if (_dbContext.Database.IsRelational())
+        {
+            rowsUpdated = await _dbContext.AgentActionPlans
+                .Where(p => p.Id == planId && p.OrganizationId == orgId.Value && p.Status == PlanStatus.AwaitingApproval)
+                .ExecuteUpdateAsync(s => s.SetProperty(p => p.Status, PlanStatus.Rejected), cancellationToken);
+        }
+        else
+        {
+            // InMemory provider support for unit test environments
+            if (plan.Status == PlanStatus.AwaitingApproval)
+            {
+                plan.Status = PlanStatus.Rejected;
+                rowsUpdated = await _dbContext.SaveChangesAsync(cancellationToken);
+            }
+            else
+            {
+                rowsUpdated = 0;
+            }
+        }
+
+        if (rowsUpdated == 0)
+        {
+            throw new InvalidOperationException("Plan is not in AwaitingApproval status or has already been processed.");
+        }
+
+        // Mark pending steps as Skipped
         foreach (var s in plan.Steps)
         {
             if (s.Status == StepStatus.Pending) s.Status = StepStatus.Skipped;
         }
-
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         var groupName = AgentHub.GetGroupName(plan.Id);
@@ -182,7 +278,6 @@ public class VaultAgentService : IVaultAgentService
     public async Task<TranscribeResponse> TranscribeAudioAsync(Stream audioStream, string contentType, CancellationToken cancellationToken = default)
     {
         await Task.CompletedTask;
-        // Simple fast whisper / speech recognition bridge with audio stream length estimation
         var duration = Math.Max(1.0, audioStream.Length / 32000.0);
         return new TranscribeResponse
         {
@@ -192,12 +287,41 @@ public class VaultAgentService : IVaultAgentService
         };
     }
 
-    private async Task ExecutePlanStepsAsync(Guid planId, Guid orgId, Guid userId)
+    public async Task ExecutePlanStepsAsync(Guid planId, Guid orgId, Guid userId, ClaimsPrincipal user)
     {
-        using var scope = _dbContext; // in production a service scope factory is preferred
+        if (_scopeFactory != null)
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var scopedDb = scope.ServiceProvider.GetRequiredService<LinkVaultDbContext>();
+            var scopedHub = scope.ServiceProvider.GetRequiredService<IHubContext<AgentHub>>();
+            var scopedSafeShare = scope.ServiceProvider.GetRequiredService<ISafeShareGuard>();
+            var scopedStorage = scope.ServiceProvider.GetRequiredService<IStorageProvider>();
+            var scopedLlama = scope.ServiceProvider.GetRequiredService<IMetaLlamaClient>();
+            var scopedLogger = scope.ServiceProvider.GetRequiredService<ILogger<VaultAgentService>>();
+
+            await ExecutePlanStepsCoreAsync(scopedDb, scopedHub, scopedSafeShare, scopedStorage, scopedLlama, scopedLogger, planId, orgId, userId, user);
+        }
+        else
+        {
+            await ExecutePlanStepsCoreAsync(_dbContext, _hubContext, _safeShareGuard, _storageProvider, _llamaClient, _logger, planId, orgId, userId, user);
+        }
+    }
+
+    public async Task ExecutePlanStepsCoreAsync(
+        LinkVaultDbContext db,
+        IHubContext<AgentHub> hubContext,
+        ISafeShareGuard safeShareGuard,
+        IStorageProvider storageProvider,
+        IMetaLlamaClient llamaClient,
+        ILogger logger,
+        Guid planId,
+        Guid orgId,
+        Guid userId,
+        ClaimsPrincipal user)
+    {
         var groupName = AgentHub.GetGroupName(planId);
 
-        var plan = await _dbContext.AgentActionPlans
+        var plan = await db.AgentActionPlans
             .Include(p => p.Steps)
             .FirstOrDefaultAsync(p => p.Id == planId);
 
@@ -208,9 +332,9 @@ public class VaultAgentService : IVaultAgentService
         {
             step.Status = StepStatus.Running;
             step.StartedAt = DateTime.UtcNow;
-            await _dbContext.SaveChangesAsync();
+            await db.SaveChangesAsync();
 
-            await _hubContext.Clients.Group(groupName).SendAsync("OnStepStarted", new
+            await hubContext.Clients.Group(groupName).SendAsync("OnStepStarted", new
             {
                 planId = plan.Id,
                 stepNumber = step.StepNumber,
@@ -220,13 +344,13 @@ public class VaultAgentService : IVaultAgentService
 
             try
             {
-                var result = await DispatchToolAsync(step.ToolName, step.ParametersJson, orgId, userId, plan.Id);
+                var result = await DispatchToolAsync(db, safeShareGuard, storageProvider, llamaClient, logger, step.ToolName, step.ParametersJson, orgId, userId, plan.Id, user);
                 step.Status = StepStatus.Completed;
                 step.ResultJson = result;
                 step.FinishedAt = DateTime.UtcNow;
                 completed++;
 
-                await _hubContext.Clients.Group(groupName).SendAsync("OnStepCompleted", new
+                await hubContext.Clients.Group(groupName).SendAsync("OnStepCompleted", new
                 {
                     planId = plan.Id,
                     stepNumber = step.StepNumber,
@@ -236,16 +360,16 @@ public class VaultAgentService : IVaultAgentService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Step {StepNumber} ({ToolName}) failed for plan {PlanId}", step.StepNumber, step.ToolName, plan.Id);
+                logger.LogError(ex, "Step {StepNumber} ({ToolName}) failed for plan {PlanId}", step.StepNumber, step.ToolName, plan.Id);
                 step.Status = StepStatus.Failed;
                 step.ErrorMessage = ex.Message;
                 step.FinishedAt = DateTime.UtcNow;
 
                 plan.Status = PlanStatus.Failed;
                 plan.ErrorMessage = $"Step {step.StepNumber} failed: {ex.Message}";
-                await _dbContext.SaveChangesAsync();
+                await db.SaveChangesAsync();
 
-                await _hubContext.Clients.Group(groupName).SendAsync("OnStepFailed", new
+                await hubContext.Clients.Group(groupName).SendAsync("OnStepFailed", new
                 {
                     planId = plan.Id,
                     stepNumber = step.StepNumber,
@@ -255,14 +379,14 @@ public class VaultAgentService : IVaultAgentService
                 return;
             }
 
-            await _dbContext.SaveChangesAsync();
+            await db.SaveChangesAsync();
         }
 
         plan.Status = PlanStatus.Completed;
         plan.CompletedAt = DateTime.UtcNow;
-        await _dbContext.SaveChangesAsync();
+        await db.SaveChangesAsync();
 
-        await _hubContext.Clients.Group(groupName).SendAsync("OnPlanFinished", new
+        await hubContext.Clients.Group(groupName).SendAsync("OnPlanFinished", new
         {
             planId = plan.Id,
             status = "Completed",
@@ -272,20 +396,51 @@ public class VaultAgentService : IVaultAgentService
         });
     }
 
-    private async Task<string> DispatchToolAsync(string toolName, string argsJson, Guid orgId, Guid userId, Guid planId)
+    private static async Task<string> DispatchToolAsync(
+        LinkVaultDbContext db,
+        ISafeShareGuard safeShareGuard,
+        IStorageProvider storageProvider,
+        IMetaLlamaClient llamaClient,
+        ILogger logger,
+        string toolName,
+        string argsJson,
+        Guid orgId,
+        Guid userId,
+        Guid planId,
+        ClaimsPrincipal user)
     {
-        var user = await _dbContext.Users.FindAsync(userId);
-        var actorName = user?.Username ?? "Agent";
-
         switch (toolName)
         {
             case "create_directory":
                 {
-                    var doc = JsonDocument.Parse(argsJson);
-                    var name = doc.RootElement.GetProperty("name").GetString() ?? "New Folder";
+                    // RBAC check: canUpload claim or Admin role
+                    if (!HasUserPermission(user, "canUpload"))
+                        throw new InvalidOperationException("Permission denied: User lacks 'canUpload' claim required to execute 'create_directory'.");
+
+                    using var doc = JsonDocument.Parse(argsJson);
+                    var root = doc.RootElement;
+                    if (!root.TryGetProperty("name", out var nameProp) || string.IsNullOrWhiteSpace(nameProp.GetString()))
+                        throw new InvalidOperationException("Missing required parameter 'name' for create_directory.");
+
+                    var name = nameProp.GetString()!;
+
                     Guid? parentId = null;
-                    if (doc.RootElement.TryGetProperty("parentDirectoryId", out var pIdProp) && Guid.TryParse(pIdProp.GetString(), out var pid))
-                        parentId = pid;
+                    if (root.TryGetProperty("parentDirectoryId", out var pIdProp) && pIdProp.ValueKind != JsonValueKind.Null)
+                    {
+                        var pIdStr = pIdProp.GetString();
+                        if (!string.IsNullOrWhiteSpace(pIdStr))
+                        {
+                            if (!Guid.TryParse(pIdStr, out var parsedParentId))
+                                throw new InvalidOperationException("Invalid 'parentDirectoryId' GUID format.");
+
+                            var parentDir = await db.Directories
+                                .FirstOrDefaultAsync(d => d.Id == parsedParentId && d.OrganizationId == orgId);
+                            if (parentDir == null)
+                                throw new InvalidOperationException("Parent directory not found or belongs to another organization.");
+
+                            parentId = parsedParentId;
+                        }
+                    }
 
                     var dir = new LinkVaultApi.Models.Directory
                     {
@@ -297,10 +452,9 @@ public class VaultAgentService : IVaultAgentService
                         CreatedAt = DateTime.UtcNow,
                         UpdatedAt = DateTime.UtcNow
                     };
-                    _dbContext.Directories.Add(dir);
+                    db.Directories.Add(dir);
 
-                    // Add verifiable audit entry
-                    _dbContext.AuditLogs.Add(new AuditLog
+                    db.AuditLogs.Add(new AuditLog
                     {
                         OrganizationId = orgId,
                         UserId = userId,
@@ -316,135 +470,233 @@ public class VaultAgentService : IVaultAgentService
                         CreatedAt = DateTime.UtcNow
                     });
 
-                    await _dbContext.SaveChangesAsync();
+                    await db.SaveChangesAsync();
                     return JsonSerializer.Serialize(new { directoryId = dir.Id, name = dir.Name });
                 }
 
             case "move_resource":
                 {
-                    var doc = JsonDocument.Parse(argsJson);
+                    // RBAC check: canUpdate claim or Admin role
+                    if (!HasUserPermission(user, "canUpdate"))
+                        throw new InvalidOperationException("Permission denied: User lacks 'canUpdate' claim required to execute 'move_resource'.");
+
+                    using var doc = JsonDocument.Parse(argsJson);
+                    var root = doc.RootElement;
+
+                    if (!root.TryGetProperty("resourceId", out var rProp) || rProp.ValueKind == JsonValueKind.Null)
+                        throw new InvalidOperationException("Missing required parameter 'resourceId'.");
+
+                    var rStr = rProp.GetString();
+                    if (string.IsNullOrWhiteSpace(rStr) || !Guid.TryParse(rStr, out var rid) || rid == Guid.Empty)
+                        throw new InvalidOperationException("Missing or invalid 'resourceId'. A valid resource ID is required.");
+
+                    var resource = await db.Resources
+                        .FirstOrDefaultAsync(r => r.Id == rid && r.OrganizationId == orgId && !r.IsDeleted);
+
+                    if (resource == null)
+                        throw new InvalidOperationException("Resource not found or belongs to another organization.");
+
                     Guid? targetDirId = null;
-                    if (doc.RootElement.TryGetProperty("targetDirectoryId", out var tProp) && Guid.TryParse(tProp.GetString(), out var tid))
-                        targetDirId = tid;
-
-                    // Locate resource
-                    Resource? resource = null;
-                    if (doc.RootElement.TryGetProperty("resourceId", out var rProp) && Guid.TryParse(rProp.GetString(), out var rid))
+                    if (root.TryGetProperty("targetDirectoryId", out var tProp) && tProp.ValueKind != JsonValueKind.Null)
                     {
-                        resource = await _dbContext.Resources.FirstOrDefaultAsync(r => r.Id == rid && r.OrganizationId == orgId);
-                    }
-                    else
-                    {
-                        // Match candidate by keyword if resourceId omitted
-                        resource = await _dbContext.Resources.FirstOrDefaultAsync(r => r.OrganizationId == orgId && !r.IsDeleted);
-                    }
-
-                    if (resource != null)
-                    {
-                        resource.DirectoryId = targetDirId;
-                        resource.UpdatedAt = DateTime.UtcNow;
-
-                        _dbContext.AuditLogs.Add(new AuditLog
+                        var tStr = tProp.GetString();
+                        if (!string.IsNullOrWhiteSpace(tStr))
                         {
-                            OrganizationId = orgId,
-                            UserId = userId,
-                            ActionType = AuditActionType.Updated,
-                            EntityType = ResourceEntityType.Resource,
-                            EntityId = resource.Id,
-                            EntityName = resource.Name,
-                            Description = $"[via agent] Moved resource '{resource.Name}'",
-                            IsViaAgent = true,
-                            AgentPlanId = planId,
-                            AgentToolName = toolName,
-                            UserAgent = "LinkVault-Agent/1.0",
-                            CreatedAt = DateTime.UtcNow
-                        });
+                            if (!Guid.TryParse(tStr, out var parsedTargetId))
+                                throw new InvalidOperationException("Invalid 'targetDirectoryId' GUID format.");
 
-                        await _dbContext.SaveChangesAsync();
-                        return JsonSerializer.Serialize(new { resourceId = resource.Id, moved = true });
+                            var targetDir = await db.Directories
+                                .FirstOrDefaultAsync(d => d.Id == parsedTargetId && d.OrganizationId == orgId);
+                            if (targetDir == null)
+                                throw new InvalidOperationException("Target directory not found or belongs to another organization.");
+
+                            targetDirId = parsedTargetId;
+                        }
                     }
 
-                    return JsonSerializer.Serialize(new { moved = false, message = "No matching resource found to move" });
+                    resource.DirectoryId = targetDirId;
+                    resource.UpdatedAt = DateTime.UtcNow;
+
+                    db.AuditLogs.Add(new AuditLog
+                    {
+                        OrganizationId = orgId,
+                        UserId = userId,
+                        ActionType = AuditActionType.Updated,
+                        EntityType = ResourceEntityType.Resource,
+                        EntityId = resource.Id,
+                        EntityName = resource.Name,
+                        Description = $"[via agent] Moved resource '{resource.Name}'",
+                        IsViaAgent = true,
+                        AgentPlanId = planId,
+                        AgentToolName = toolName,
+                        UserAgent = "LinkVault-Agent/1.0",
+                        CreatedAt = DateTime.UtcNow
+                    });
+
+                    await db.SaveChangesAsync();
+                    return JsonSerializer.Serialize(new { resourceId = resource.Id, moved = true });
                 }
 
             case "create_share_link":
                 {
-                    var doc = JsonDocument.Parse(argsJson);
-                    Guid resourceId = Guid.Empty;
-                    if (doc.RootElement.TryGetProperty("resourceId", out var rProp) && Guid.TryParse(rProp.GetString(), out var rid))
-                        resourceId = rid;
-                    else
+                    // RBAC check: canShare claim or Admin role
+                    if (!HasUserPermission(user, "canShare"))
+                        throw new InvalidOperationException("Permission denied: User lacks 'canShare' claim required to execute 'create_share_link'.");
+
+                    using var doc = JsonDocument.Parse(argsJson);
+                    var root = doc.RootElement;
+
+                    if (!root.TryGetProperty("resourceId", out var rProp) || rProp.ValueKind == JsonValueKind.Null)
+                        throw new InvalidOperationException("Missing required parameter 'resourceId'.");
+
+                    var rStr = rProp.GetString();
+                    if (string.IsNullOrWhiteSpace(rStr) || !Guid.TryParse(rStr, out var rid) || rid == Guid.Empty)
+                        throw new InvalidOperationException("Missing or invalid 'resourceId'. A valid resource ID is required.");
+
+                    var resource = await db.Resources
+                        .FirstOrDefaultAsync(r => r.Id == rid && r.OrganizationId == orgId && !r.IsDeleted);
+
+                    if (resource == null)
+                        throw new InvalidOperationException("Resource not found or belongs to another organization.");
+
+                    // SAFE SHARE GUARD CHECK
+                    var scanResult = await safeShareGuard.ScanResourceAsync(resource.Id, userId);
+                    if (!scanResult.CanShare)
                     {
-                        var firstResource = await _dbContext.Resources.FirstOrDefaultAsync(r => r.OrganizationId == orgId && !r.IsDeleted);
-                        if (firstResource != null) resourceId = firstResource.Id;
+                        throw new InvalidOperationException($"Safe Share Guard blocked share link creation: {scanResult.Message}");
                     }
 
-                    if (resourceId != Guid.Empty)
+                    int expiryDays = 7;
+                    if (root.TryGetProperty("expiryDays", out var expProp) && expProp.ValueKind == JsonValueKind.Number)
                     {
-                        // SAFE SHARE GUARD CHECK
-                        var scanResult = await _safeShareGuard.ScanResourceAsync(resourceId, userId);
-                        if (!scanResult.CanShare)
+                        var parsedExp = expProp.GetInt32();
+                        if (parsedExp > 0) expiryDays = parsedExp;
+                    }
+
+                    int? maxDownloads = null;
+                    if (root.TryGetProperty("maxDownloads", out var maxDlProp) && maxDlProp.ValueKind == JsonValueKind.Number)
+                    {
+                        maxDownloads = maxDlProp.GetInt32();
+                    }
+
+                    string? passwordHash = null;
+                    if (root.TryGetProperty("password", out var pwdProp) && pwdProp.ValueKind == JsonValueKind.String)
+                    {
+                        var pwdStr = pwdProp.GetString();
+                        if (!string.IsNullOrEmpty(pwdStr))
                         {
-                            throw new InvalidOperationException($"Safe Share Guard blocked share link creation: {scanResult.Message}");
+                            passwordHash = BCrypt.Net.BCrypt.HashPassword(pwdStr);
                         }
-
-                        int expiryDays = 7;
-                        if (doc.RootElement.TryGetProperty("expiryDays", out var expProp))
-                            expiryDays = expProp.GetInt32();
-
-                        var shareLink = new ShareLink
-                        {
-                            ResourceId = resourceId,
-                            CreatedById = userId,
-                            Token = Guid.NewGuid().ToString("N")[..16],
-                            ExpiresAt = DateTime.UtcNow.AddDays(expiryDays),
-                            IsActive = true,
-                            CreatedAt = DateTime.UtcNow
-                        };
-
-                        _dbContext.ShareLinks.Add(shareLink);
-
-                        _dbContext.AuditLogs.Add(new AuditLog
-                        {
-                            OrganizationId = orgId,
-                            UserId = userId,
-                            ActionType = AuditActionType.Shared,
-                            EntityType = ResourceEntityType.Resource,
-                            EntityId = resourceId,
-                            Description = $"[via agent] Created {expiryDays}-day share link",
-                            IsViaAgent = true,
-                            AgentPlanId = planId,
-                            AgentToolName = toolName,
-                            UserAgent = "LinkVault-Agent/1.0",
-                            CreatedAt = DateTime.UtcNow
-                        });
-
-                        await _dbContext.SaveChangesAsync();
-                        return JsonSerializer.Serialize(new { shareLinkId = shareLink.Id, token = shareLink.Token, expiresAt = shareLink.ExpiresAt });
                     }
 
-                    return JsonSerializer.Serialize(new { shared = false, message = "Resource not found for share link" });
+                    var shareLink = new ShareLink
+                    {
+                        ResourceId = resource.Id,
+                        OrganizationId = orgId,
+                        CreatedById = userId,
+                        PasswordHash = passwordHash,
+                        ExpiresAt = DateTime.UtcNow.AddDays(expiryDays),
+                        MaxDownloads = maxDownloads,
+                        AllowPreview = true,
+                        RequireEmail = false,
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    db.ShareLinks.Add(shareLink);
+
+                    db.AuditLogs.Add(new AuditLog
+                    {
+                        OrganizationId = orgId,
+                        UserId = userId,
+                        ActionType = AuditActionType.Shared,
+                        EntityType = ResourceEntityType.Resource,
+                        EntityId = resource.Id,
+                        EntityName = resource.Name,
+                        Description = $"[via agent] Created share link: {shareLink.Token}",
+                        IsViaAgent = true,
+                        AgentPlanId = planId,
+                        AgentToolName = toolName,
+                        UserAgent = "LinkVault-Agent/1.0",
+                        CreatedAt = DateTime.UtcNow
+                    });
+
+                    await db.SaveChangesAsync();
+                    return JsonSerializer.Serialize(new
+                    {
+                        shareLinkId = shareLink.Id,
+                        token = shareLink.Token,
+                        url = $"/s/{shareLink.Token}",
+                        expiresAt = shareLink.ExpiresAt,
+                        maxDownloads = shareLink.MaxDownloads,
+                        hasPassword = !string.IsNullOrEmpty(shareLink.PasswordHash)
+                    });
+                }
+
+            case "delete_resource":
+                {
+                    // RBAC check: canDelete claim or Admin role
+                    if (!HasUserPermission(user, "canDelete"))
+                        throw new InvalidOperationException("Permission denied: User lacks 'canDelete' claim required to execute 'delete_resource'.");
+
+                    using var doc = JsonDocument.Parse(argsJson);
+                    var root = doc.RootElement;
+
+                    if (!root.TryGetProperty("resourceId", out var rProp) || rProp.ValueKind == JsonValueKind.Null)
+                        throw new InvalidOperationException("Missing required parameter 'resourceId'.");
+
+                    var rStr = rProp.GetString();
+                    if (string.IsNullOrWhiteSpace(rStr) || !Guid.TryParse(rStr, out var rid) || rid == Guid.Empty)
+                        throw new InvalidOperationException("Missing or invalid 'resourceId'. A valid resource ID is required.");
+
+                    var resource = await db.Resources
+                        .FirstOrDefaultAsync(r => r.Id == rid && r.OrganizationId == orgId && !r.IsDeleted);
+
+                    if (resource == null)
+                        throw new InvalidOperationException("Resource not found or belongs to another organization.");
+
+                    resource.IsDeleted = true;
+                    resource.DeletedAt = DateTime.UtcNow;
+
+                    db.AuditLogs.Add(new AuditLog
+                    {
+                        OrganizationId = orgId,
+                        UserId = userId,
+                        ActionType = AuditActionType.Deleted,
+                        EntityType = ResourceEntityType.Resource,
+                        EntityId = resource.Id,
+                        EntityName = resource.Name,
+                        Description = $"[via agent] Deleted resource '{resource.Name}'",
+                        IsViaAgent = true,
+                        AgentPlanId = planId,
+                        AgentToolName = toolName,
+                        UserAgent = "LinkVault-Agent/1.0",
+                        CreatedAt = DateTime.UtcNow
+                    });
+
+                    await db.SaveChangesAsync();
+                    return JsonSerializer.Serialize(new { resourceId = resource.Id, deleted = true });
                 }
 
             case "classify_image":
                 {
-                    var doc = JsonDocument.Parse(argsJson);
+                    using var doc = JsonDocument.Parse(argsJson);
                     Guid resourceId = Guid.Empty;
                     if (doc.RootElement.TryGetProperty("resourceId", out var rProp) && Guid.TryParse(rProp.GetString(), out var rid))
                         resourceId = rid;
 
-                    var resource = await _dbContext.Resources.FirstOrDefaultAsync(r => (resourceId == Guid.Empty || r.Id == resourceId) && r.OrganizationId == orgId && !r.IsDeleted);
+                    var resource = await db.Resources.FirstOrDefaultAsync(r => (resourceId == Guid.Empty || r.Id == resourceId) && r.OrganizationId == orgId && !r.IsDeleted);
                     if (resource != null && !string.IsNullOrEmpty(resource.StoragePath))
                     {
                         try
                         {
-                            using var stream = await _storageProvider.GetAsync(resource.StoragePath);
+                            using var stream = await storageProvider.GetAsync(resource.StoragePath);
                             using var ms = new MemoryStream();
                             await stream.CopyToAsync(ms);
                             var imageBytes = ms.ToArray();
-                            var visionResult = await _llamaClient.ClassifyImageWithVisionAsync(imageBytes, resource.MimeType ?? "image/png");
+                            var visionResult = await llamaClient.ClassifyImageWithVisionAsync(imageBytes, resource.MimeType ?? "image/png");
 
-                            _dbContext.AuditLogs.Add(new AuditLog
+                            db.AuditLogs.Add(new AuditLog
                             {
                                 OrganizationId = orgId,
                                 UserId = userId,
@@ -459,13 +711,13 @@ public class VaultAgentService : IVaultAgentService
                                 UserAgent = "LinkVault-Agent/1.0",
                                 CreatedAt = DateTime.UtcNow
                             });
-                            await _dbContext.SaveChangesAsync();
+                            await db.SaveChangesAsync();
 
                             return JsonSerializer.Serialize(visionResult);
                         }
                         catch (Exception ex)
                         {
-                            _logger.LogWarning(ex, "Could not stream image content for classification. Returning default.");
+                            logger.LogWarning(ex, "Could not stream image content for classification. Returning default.");
                         }
                     }
 
