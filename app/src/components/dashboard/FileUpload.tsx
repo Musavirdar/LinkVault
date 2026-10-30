@@ -70,13 +70,13 @@ export function FileUploadZone({ directoryId, onUploaded }: Props) {
     }, [handleFiles]);
 
     return (
-        <div className="rounded-xl overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border-strong)]">
+        <div className="rounded-2xl overflow-hidden bg-card border border-black/[0.06] dark:border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
             {/* Drop Zone */}
             <motion.div
                 className={cn(
                     'relative p-8 flex flex-col items-center justify-center gap-3 cursor-pointer transition-all',
-                    'border-2 border-dashed rounded-xl m-2',
-                    dragging ? 'border-[var(--accent-primary)] bg-[var(--accent-primary)]/5' : 'border-[var(--border-strong)] hover:border-[var(--accent-primary)]/50'
+                    'border-2 border-dashed rounded-xl m-2.5',
+                    dragging ? 'border-[#0071E3] bg-[#0071E3]/5' : 'border-black/[0.1] dark:border-white/15 hover:border-[#0071E3]/50'
                 )}
                 animate={dragging ? { scale: 1.01 } : { scale: 1 }}
                 onDragOver={e => { e.preventDefault(); setDragging(true); }}

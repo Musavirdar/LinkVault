@@ -8,6 +8,7 @@ interface Props {
 }
 
 const ACCENT_COLORS = [
+    { label: 'Cupertino Blue', value: '#0071E3' },
     { label: 'Indigo', value: '#5865F2' },
     { label: 'Purple', value: '#7C3AED' },
     { label: 'Rose', value: '#E11D48' },

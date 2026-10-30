@@ -1,3 +1,24 @@
+// Apple HIG Physics Spring Curves (WWDC Designing Fluid Interfaces)
+export const appleSpring = {
+  type: "spring" as const,
+  stiffness: 350,
+  damping: 35,
+  mass: 1,
+};
+
+export const appleBounceSpring = {
+  type: "spring" as const,
+  stiffness: 300,
+  damping: 24,
+  mass: 0.8,
+};
+
+export const appleMicroSpring = {
+  type: "spring" as const,
+  stiffness: 500,
+  damping: 30,
+};
+
 import type { Variants } from 'framer-motion';
 
 // Easing functions as tuples

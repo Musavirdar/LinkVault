@@ -44,13 +44,13 @@ const typeColors: Record<FileItem['type'], string> = {
 export function FileList({ files }: FileListProps) {
   return (
     <motion.div
-      className="rounded-lg overflow-hidden bg-bg-secondary border border-border-subtle"
+      className="rounded-2xl overflow-hidden bg-card border border-black/[0.06] dark:border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]"
       variants={staggerContainer}
       initial="hidden"
       animate="visible"
     >
       {/* Header */}
-      <div className="flex items-center px-4 py-3 border-b border-border-subtle">
+      <div className="flex items-center px-4 py-3 border-b border-black/[0.06] dark:border-white/10">
         <h3 className="text-lg font-semibold text-text-primary">
           Recent Files
         </h3>
@@ -60,7 +60,7 @@ export function FileList({ files }: FileListProps) {
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="text-left text-xs font-medium uppercase tracking-wider text-text-muted border-b border-border-subtle">
+            <tr className="text-left text-xs font-medium uppercase tracking-wider text-text-muted border-b border-black/[0.06] dark:border-white/10">
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Type</th>
               <th className="px-4 py-3">Date</th>

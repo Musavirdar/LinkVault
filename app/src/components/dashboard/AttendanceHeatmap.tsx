@@ -10,11 +10,11 @@ function getColor(count: number, max: number): string {
     if (count === 0) return 'var(--bg-primary)';
     const intensity = Math.ceil((count / max) * 4);
     switch (intensity) {
-        case 1: return '#1e3a5f';
-        case 2: return '#1e5fa8';
-        case 3: return '#3b82f6';
-        case 4: return '#60a5fa';
-        default: return '#93c5fd';
+        case 1: return 'rgba(0, 113, 227, 0.25)';
+        case 2: return 'rgba(0, 113, 227, 0.5)';
+        case 3: return 'rgba(0, 113, 227, 0.75)';
+        case 4: return '#0071E3';
+        default: return '#0077ED';
     }
 }
 
@@ -61,7 +61,7 @@ export function AttendanceHeatmap() {
     };
 
     return (
-        <div className="rounded-xl p-5 bg-[var(--bg-secondary)] border border-[var(--border-strong)]">
+        <div className="rounded-2xl p-6 bg-card border border-black/[0.06] dark:border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
             {/* Title + Summary Stats */}
             <div className="flex items-start justify-between mb-5 flex-wrap gap-3">
                 <div>

@@ -106,7 +106,7 @@ export function SharedFilePage() {
 
       <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
         className="relative z-10 w-full max-w-md">
-        <div className="rounded-2xl p-8 text-center" style={{ background: 'rgba(26, 26, 46, 0.9)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(20px)' }}>
+        <div  className="bg-white/90 dark:bg-[#1C1C1E]/90 border border-black/[0.08] dark:border-white/12 backdrop-blur-2xl shadow-[0_24px_60px_rgba(0,0,0,0.2)] rounded-3xl p-8 text-center">
           {/* File icon */}
           <div className="w-20 h-20 rounded-2xl mx-auto mb-5 flex items-center justify-center" style={{ background: `${accent}20`, border: `1px solid ${accent}30` }}>
             <FileIcon className="w-10 h-10" style={{ color: accent }} />
@@ -148,7 +148,7 @@ export function SharedFilePage() {
                 className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-indigo-500" />
               {pwError && <p className="text-red-400 text-xs">{pwError}</p>}
               <button onClick={handleVerifyPassword}
-                className="w-full py-3 rounded-xl font-semibold text-white bg-indigo-600 hover:bg-indigo-500 transition-all">
+                className="w-full py-3 rounded-xl font-semibold text-white bg-[#0071E3] hover:bg-[#0077ED] active:bg-[#0066CC] shadow-sm shadow-[#0071E3]/25 transition-all">
                 Unlock
               </button>
             </div>

@@ -11,7 +11,7 @@ function CompletionBar({ value }: { value: number }) {
     <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: 'var(--bg-tertiary)' }}>
       <motion.div
         className="h-full rounded-full"
-        style={{ background: 'linear-gradient(90deg, #6366F1, #A78BFA)' }}
+        style={{ background: 'linear-gradient(90deg, #0071E3, #34C759)' }}
         initial={{ width: 0 }}
         animate={{ width: `${value}%` }}
         transition={{ duration: 0.8, ease: 'easeOut', delay: 0.2 }}
@@ -42,8 +42,8 @@ export function ProfileCard() {
 
   return (
     <motion.div
-      className={cn('rounded-xl p-5', 'bg-bg-secondary border border-border-subtle')}
-      style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.15)' }}
+      className={cn('rounded-2xl p-6', 'bg-card border border-black/[0.06] dark:border-white/10')}
+      style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}
       variants={staggerItem}
     >
       {/* Header */}
@@ -51,9 +51,9 @@ export function ProfileCard() {
         <div className="flex items-center gap-2">
           <div
             className="w-6 h-6 rounded-lg flex items-center justify-center"
-            style={{ background: '#6366F120' }}
+            style={{ background: 'rgba(0, 113, 227, 0.1)' }}
           >
-            <User className="w-3.5 h-3.5" style={{ color: '#6366F1' }} />
+            <User className="w-3.5 h-3.5" style={{ color: '#0071E3' }} />
           </div>
           <h3 className="text-sm font-semibold text-text-primary">Public Profile</h3>
         </div>
@@ -62,7 +62,7 @@ export function ProfileCard() {
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-1 text-xs font-medium transition-colors hover:opacity-80"
-          style={{ color: '#6366F1' }}
+          style={{ color: '#0071E3' }}
           title="View your public profile"
         >
           Preview <ArrowUpRight className="w-3 h-3" />
@@ -100,7 +100,7 @@ export function ProfileCard() {
           <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">
             Profile Completeness
           </span>
-          <span className="text-xs font-bold" style={{ color: '#6366F1' }}>
+          <span className="text-xs font-bold" style={{ color: '#0071E3' }}>
             {completeness}%
           </span>
         </div>
