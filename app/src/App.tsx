@@ -16,6 +16,7 @@ import { PublicProfilePage } from '@/pages/PublicProfilePage';
 import { ProfileEditorPage } from '@/pages/ProfileEditorPage';
 import { SharedFilePage } from '@/pages/SharedFilePage';
 import { TransferPage } from '@/pages/TransferPage';
+import { AgentPage } from '@/agent/pages/AgentPage';
 import { useStore } from '@/store/useStore';
 import { parseJwtPermissions } from '@/api/client';
 
@@ -67,6 +68,7 @@ function App() {
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/subscription" element={<SubscriptionPage />} />
                 <Route path="/profile-editor" element={<ProfileEditorPage />} />
+                <Route path="/agent" element={<AgentPage />} />
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />
               </Routes>
             </RootLayout>
@@ -83,6 +85,7 @@ function App() {
       <Route path="/audit" element={token ? <ProtectedRoute><RootLayout><AuditPage /></RootLayout></ProtectedRoute> : <Navigate to="/" replace />} />
       <Route path="/settings" element={token ? <ProtectedRoute><RootLayout><SettingsPage /></RootLayout></ProtectedRoute> : <Navigate to="/" replace />} />
       <Route path="/subscription" element={token ? <ProtectedRoute><RootLayout><SubscriptionPage /></RootLayout></ProtectedRoute> : <Navigate to="/" replace />} />
+      <Route path="/agent" element={token ? <ProtectedRoute><RootLayout><AgentPage /></RootLayout></ProtectedRoute> : <Navigate to="/" replace />} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

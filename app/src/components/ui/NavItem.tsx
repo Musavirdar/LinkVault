@@ -6,6 +6,7 @@ import {
   BarChart3, 
   ClipboardList, 
   Settings,
+  Bot,
   type LucideIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -15,7 +16,7 @@ interface NavItemProps {
   label: string;
   isActive?: boolean;
   isCollapsed?: boolean;
-  badge?: number;
+  badge?: number | string;
   onClick?: () => void;
 }
 
@@ -26,6 +27,8 @@ const iconMap: Record<string, LucideIcon> = {
   analytics: BarChart3,
   audit: ClipboardList,
   settings: Settings,
+  agent: Bot,
+  bot: Bot,
 };
 
 export function NavItem({
@@ -56,9 +59,9 @@ export function NavItem({
       {!isCollapsed && (
         <>
           <span className="flex-1 text-left">{label}</span>
-          {badge !== undefined && badge > 0 && (
+          {badge !== undefined && (
             <span className="
-              px-2 py-0.5 text-xs rounded-full
+              px-2 py-0.5 text-xs rounded-full font-semibold
               bg-accent-primary text-white
             ">
               {badge}
@@ -69,7 +72,6 @@ export function NavItem({
     </motion.button>
   );
 }
-
 
 // Navigation section header
 export function NavSection({ 

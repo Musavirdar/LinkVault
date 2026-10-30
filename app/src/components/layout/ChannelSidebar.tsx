@@ -14,6 +14,7 @@ const individualSections = [
     id: 'sharing',
     label: 'My Sharing',
     items: [
+      { id: 'agent', icon: 'agent', label: 'AI Agent', href: '/agent', badge: 'Meta' },
       { id: 'links', icon: 'links', label: 'My Links', href: '/links', badge: 0 },
       { id: 'profile-editor', icon: 'settings', label: 'Profile Editor', href: '/profile-editor' },
       { id: 'directories', icon: 'files', label: 'Doc Share Tree', href: '/directories' },
@@ -36,6 +37,7 @@ const teamSections = [
     label: 'General',
     items: [
       { id: 'dashboard', icon: 'dashboard', label: 'Dashboard', href: '/dashboard' },
+      { id: 'agent', icon: 'agent', label: 'AI Agent', href: '/agent', badge: 'Meta' },
       { id: 'links', icon: 'links', label: 'My Links', href: '/links', badge: 0 },
       { id: 'profile-editor', icon: 'settings', label: 'Profile Editor', href: '/profile-editor' },
       { id: 'files', icon: 'files', label: 'My Files', href: '/files' },
