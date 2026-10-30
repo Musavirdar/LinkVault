@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { RootLayout } from '@/components/layout/RootLayout';
 import { LoginPage } from '@/pages/LoginPage';
 import { LandingPage } from '@/pages/LandingPage';
+import { AppleLandingPage } from '@/pages/AppleLandingPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { LinksPage } from '@/pages/LinksPage';
 import { DirectoriesPage } from '@/pages/DirectoriesPage';
@@ -42,6 +43,8 @@ function App() {
     <Routes>
       {/* Public routes — accessible without login */}
       <Route path="/" element={token ? <Navigate to="/dashboard" replace /> : <LandingPage />} />
+      <Route path="/apple" element={<AppleLandingPage />} />
+      <Route path="/applelook" element={<AppleLandingPage />} />
       <Route path="/login" element={token ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
       <Route path="/oauth-callback" element={<OAuthCallbackPage />} />
       {/* Public user profiles — no auth required */}

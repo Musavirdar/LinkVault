@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <meta content="web_dashboard" name="shell-type"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  
+  <style>
+    @layer base {
+      html, body {
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter", system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      body {
+        overscroll-behavior: none;
+      }
+      main > :first-child { margin-top: 0 !important; }
+      main > :last-child { margin-bottom: 0 !important; }
+    }
+    ::-webkit-scrollbar { display: none; }
+  </style>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "on-primary": "#ffffff",
+            "on-secondary": "#ffffff",
+            "background": "#F5F5F7",
+            "on-background": "#1D1D1F",
+            "surface": "#FFFFFF",
+            "on-surface": "#1D1D1F",
+            "surface-container-lowest": "#FFFFFF",
+            "surface-container-low": "#F5F5F7",
+            "surface-container": "#EBEBED",
+            "surface-container-high": "#E5E5EA",
+            "surface-container-highest": "#D2D2D7",
+            "surface-bright": "#FFFFFF",
+            "surface-dim": "#E5E5EA",
+            "surface-variant": "#EBEBED",
+            "on-surface-variant": "#6E6E73",
+            "primary": "#0071E3",
+            "primary-container": "#0071E3",
+            "on-primary-container": "#FFFFFF",
+            "primary-fixed": "#E8F2FF",
+            "primary-fixed-dim": "#CFE4FF",
+            "secondary": "#86868B",
+            "secondary-container": "#EBEBED",
+            "on-secondary-container": "#1D1D1F",
+            "secondary-fixed": "#EBEBED",
+            "secondary-fixed-dim": "#D2D2D7",
+            "outline": "#86868B",
+            "outline-variant": "#E5E5EA",
+            "tertiary": "#F56300",
+            "tertiary-container": "#FFF2EB",
+            "tertiary-fixed": "#FFE4D6",
+            "on-tertiary-fixed": "#5C2000",
+            "error": "#FF3B30",
+            "error-container": "#FFEBEA",
+            "on-error-container": "#990000"
+          },
+          borderRadius: {
+            DEFAULT: "0.5rem",
+            lg: "0.75rem",
+            xl: "1rem",
+            "2xl": "1.25rem",
+            "3xl": "1.75rem",
+            full: "9999px"
+          },
+          spacing: {
+            "gutter-mobile": "1rem",
+            "gutter": "1.5rem",
+            "margin": "2rem",
+            "space-xs": "0.25rem",
+            "space-sm": "0.5rem",
+            "space-md": "1rem",
+            "space-lg": "1.5rem",
+            "space-xl": "2.5rem"
+          },
+          fontFamily: {
+            display: ["-apple-system", "BlinkMacSystemFont", "SF Pro Display", "Inter", "sans-serif"],
+            headline: ["-apple-system", "BlinkMacSystemFont", "SF Pro Display", "Inter", "sans-serif"],
+            body: ["-apple-system", "BlinkMacSystemFont", "SF Pro Text", "Inter", "sans-serif"]
+          },
+          fontSize: {
+            "display": ["52px", { lineHeight: "1.08", letterSpacing: "-0.03em", fontWeight: "600" }],
+            "headline-lg": ["36px", { lineHeight: "1.18", letterSpacing: "-0.022em", fontWeight: "600" }],
+            "headline-md": ["24px", { lineHeight: "1.25", letterSpacing: "-0.015em", fontWeight: "600" }],
+            "headline-sm": ["19px", { lineHeight: "1.3", letterSpacing: "-0.01em", fontWeight: "600" }],
+            "body-lg": ["19px", { lineHeight: "1.45", letterSpacing: "-0.008em", fontWeight: "400" }],
+            "body-md": ["15px", { lineHeight: "1.42", letterSpacing: "-0.003em", fontWeight: "400" }],
+            "label-lg": ["15px", { lineHeight: "1.33", letterSpacing: "-0.005em", fontWeight: "500" }],
+            "label-md": ["13px", { lineHeight: "1.38", letterSpacing: "-0.002em", fontWeight: "500" }],
+            "label-caps": ["11px", { lineHeight: "1.3", letterSpacing: "0.05em", fontWeight: "600" }]
+          }
+        }
+      }
+    };
+  </script>
+</head>
+
+<body class="bg-[#F5F5F7] dark:bg-[#000000] font-body text-[#1D1D1F] dark:text-[#F5F5F7] antialiased">
+  <!-- Sidebar -->
+  <aside class="fixed left-0 top-0 h-full w-64 bg-white/75 dark:bg-[#1C1C1E]/75 backdrop-blur-2xl border-r border-black/[0.06] dark:border-white/10 z-50 flex flex-col justify-between py-4 select-none">
+    <div class="flex flex-col gap-4">
+      <!-- App Brand Header -->
+      <div class="flex items-center gap-2.5 px-5 h-11">
+        <img alt="LinkVault Logo" class="h-6 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1UbcIUStZ-tEXrVwMgFcaav3KfhdgICONmzYt_ToqD3l-T0tPzgHcI9k8F76U7pDjTFWbaPw4_sD7IDBSW3HikuZEV4GwW-xfKkT9YPeo5PYWovV-VucNeTaG4rFr9V_0E5B_fuZimAh3bpdzprVPzhXd3fFRjwGvpcsaJU-c1umqXWTyXFuO0EQgYcOvx2cQxdDXUbcgETOUN6uyqBO_VE4G_XgDCL7PbbE0EIUFw"/>
+        <span class="font-headline text-[17px] font-semibold text-[#1D1D1F] dark:text-white tracking-[-0.015em]">LinkVault</span>
+      </div>
+
+      <!-- Quick Search Trigger -->
+      <div class="px-3.5">
+        <button class="w-full flex items-center justify-between px-3 py-1.5 rounded-xl bg-black/[0.04] dark:bg-white/[0.06] text-[#86868B] hover:text-[#1D1D1F] dark:hover:text-white hover:bg-black/[0.07] dark:hover:bg-white/[0.09] active:scale-[0.98] transition-all border border-black/[0.04] dark:border-white/[0.04]" type="button">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-[17px]">search</span>
+            <span class="text-[13px] font-normal">Quick Jump</span>
+          </div>
+          <kbd class="px-1.5 py-0.5 rounded-[6px] bg-white dark:bg-neutral-800 text-[10px] font-medium text-[#6E6E73] dark:text-neutral-300 shadow-[0_1px_2px_rgba(0,0,0,0.06),inset_0_0.5px_0_rgba(255,255,255,0.8)] border border-black/[0.08] dark:border-white/10">⌘K</kbd>
+        </button>
+      </div>
+
+      <!-- Navigation Items -->
+      <nav class="flex flex-col gap-0.5 px-2.5" data-active-classes="bg-[#0071E3] text-white shadow-[0_1px_3px_rgba(0,113,227,0.3)] font-medium rounded-xl">
+        <a aria-current="page" class="flex items-center gap-3 px-3 py-2 transition-all bg-[#0071E3] text-white font-medium rounded-xl shadow-[0_1px_3px_rgba(0,113,227,0.3)] active:scale-[0.98]" data-path="overview" href="#">
+          <span class="material-symbols-outlined text-[19px]">grid_view</span>
+          <span class="text-[13px] tracking-[-0.005em]">Overview</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[#515154] dark:text-neutral-300 hover:text-[#1D1D1F] dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/[0.05] active:scale-[0.98] transition-all" data-path="agent-workspace" href="/agent">
+          <span class="material-symbols-outlined text-[19px]">smart_toy</span>
+          <span class="text-[13px] tracking-[-0.005em]">Agent Workspace</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[#515154] dark:text-neutral-300 hover:text-[#1D1D1F] dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/[0.05] active:scale-[0.98] transition-all" data-path="files" href="/files">
+          <span class="material-symbols-outlined text-[19px]">folder</span>
+          <span class="text-[13px] tracking-[-0.005em]">Files</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[#515154] dark:text-neutral-300 hover:text-[#1D1D1F] dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/[0.05] active:scale-[0.98] transition-all" data-path="activity" href="/audit">
+          <span class="material-symbols-outlined text-[19px]">schedule</span>
+          <span class="text-[13px] tracking-[-0.005em]">Activity</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[#515154] dark:text-neutral-300 hover:text-[#1D1D1F] dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/[0.05] active:scale-[0.98] transition-all" data-path="component-library" href="/links">
+          <span class="material-symbols-outlined text-[19px]">widgets</span>
+          <span class="text-[13px] tracking-[-0.005em]">Component Library</span>
+        </a>
+      </nav>
+    </div>
+
+    <!-- Bottom Preferences & User Card -->
+    <div class="px-2.5 flex flex-col gap-1.5">
+      <a class="flex items-center gap-3 px-3 py-2 rounded-xl text-[#515154] dark:text-neutral-300 hover:text-[#1D1D1F] dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/[0.05] active:scale-[0.98] transition-all" data-path="settings" href="/settings">
+        <span class="material-symbols-outlined text-[19px]">settings</span>
+        <span class="text-[13px] font-medium tracking-[-0.005em]">Preferences</span>
+      </a>
+
+      <!-- Compact Profile Pill -->
+      <div class="p-2 rounded-2xl bg-white/80 dark:bg-white/[0.04] border border-black/[0.05] dark:border-white/10 shadow-[0_2px_8px_rgba(0,0,0,0.03)] flex items-center justify-between transition-all hover:bg-white dark:hover:bg-white/[0.06]">
+        <div class="flex items-center gap-2.5">
+          <div class="relative">
+            <img alt="Profile" class="w-8 h-8 rounded-full object-cover ring-1 ring-black/[0.06]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBXk6WO0d__04TrXmc0C359wF1gVekPDKGLJP0FL8KpFBYI8ZCgDIorQ3s_JF5D-4RfjpOG00H9rapImyAt4hufBJl77U6f4ghNROXDTbh9sW9HEeo7gNqBGZ_mUWubBIeX2O5O1GdHbwugO5NOB47cyFQuY0vppTUdejz4nJ2rT0mPn5lYVF1L3qTqOzoB01R1lWXOvLJE1vUsEb9vxIJilf6r8KOSetzmM6PKqMg"/>
+            <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#34C759] ring-2 ring-white dark:ring-neutral-900"></span>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-[13px] font-medium text-[#1D1D1F] dark:text-white leading-tight">Executive Admin</span>
+            <span class="text-[11px] font-normal text-[#86868B] leading-tight">Autonomous Synced</span>
+          </div>
+        </div>
+        <span class="material-symbols-outlined text-[16px] text-[#86868B]">unfold_more</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Top Glass Header -->
+  <div class="pl-64">
+    <header class="fixed top-0 left-64 right-0 h-14 bg-[#F5F5F7]/80 dark:bg-black/75 backdrop-blur-2xl border-b border-black/[0.06] dark:border-white/10 z-40 flex items-center justify-between px-6 transition-all">
+      <!-- Apple-style Segmented Control Nav Pill -->
+      <nav class="hidden sm:flex items-center p-0.5 bg-black/[0.05] dark:bg-white/[0.08] rounded-full border border-black/[0.03] dark:border-white/[0.04]" data-active-classes="bg-white text-on-surface font-label-md rounded-full shadow-sm">
+        <a aria-current="page" class="px-3.5 py-1 text-[13px] font-medium text-[#1D1D1F] dark:text-white bg-white dark:bg-neutral-800 rounded-full shadow-[0_1px_3px_rgba(0,0,0,0.08),0_1px_1px_rgba(0,0,0,0.04)] transition-all" data-path="overview" href="#">Overview</a>
+        <a class="px-3.5 py-1 text-[13px] font-medium text-[#6E6E73] dark:text-neutral-400 hover:text-[#1D1D1F] dark:hover:text-white rounded-full transition-colors" data-path="agent-workspace" href="/agent">Agent Workspace</a>
+        <a class="px-3.5 py-1 text-[13px] font-medium text-[#6E6E73] dark:text-neutral-400 hover:text-[#1D1D1F] dark:hover:text-white rounded-full transition-colors" data-path="files" href="/files">Files</a>
+        <a class="px-3.5 py-1 text-[13px] font-medium text-[#6E6E73] dark:text-neutral-400 hover:text-[#1D1D1F] dark:hover:text-white rounded-full transition-colors" data-path="activity" href="/audit">Activity</a>
+        <a class="px-3.5 py-1 text-[13px] font-medium text-[#6E6E73] dark:text-neutral-400 hover:text-[#1D1D1F] dark:hover:text-white rounded-full transition-colors" data-path="component-library" href="/links">Component Library</a>
+      </nav>
+
+      <!-- Right Header Actions -->
+      <div class="flex items-center gap-3 ml-auto">
+        <button class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 dark:bg-neutral-800/80 border border-black/[0.06] dark:border-white/10 text-[13px] font-medium text-[#1D1D1F] dark:text-white hover:bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] active:scale-[0.97] transition-all h-8" type="button">
+          <span class="material-symbols-outlined text-[16px] text-[#6E6E73]">tune</span>
+          <span>Filters</span>
+        </button>
+        <div class="relative flex items-center justify-center">
+          <img alt="Profile" class="w-7 h-7 rounded-full object-cover ring-1 ring-black/[0.08]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBXk6WO0d__04TrXmc0C359wF1gVekPDKGLJP0FL8KpFBYI8ZCgDIorQ3s_JF5D-4RfjpOG00H9rapImyAt4hufBJl77U6f4ghNROXDTbh9sW9HEeo7gNqBGZ_mUWubBIeX2O5O1GdHbwugO5NOB47cyFQuY0vppTUdejz4nJ2rT0mPn5lYVF1L3qTqOzoB01R1lWXOvLJE1vUsEb9vxIJilf6r8KOSetzmM6PKqMg"/>
+          <span class="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-[#34C759] ring-2 ring-white dark:ring-black"></span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Viewport -->
+    <main class="relative pt-14 min-h-screen bg-[#F5F5F7] dark:bg-[#000000]">
+      <div class="w-full max-w-[1100px] mx-auto px-6 py-12">
+        <div class="flex flex-col w-full">
+          
+          <!-- Hero Section -->
+          <section class="relative pt-10 pb-16 flex flex-col items-center text-center">
+            <!-- Cupertino Status Pill -->
+            <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/90 dark:bg-neutral-800/90 border border-black/[0.06] dark:border-white/10 shadow-[0_1px_3px_rgba(0,0,0,0.03)] mb-6 cursor-default transition-all hover:shadow-[0_2px_6px_rgba(0,0,0,0.06)]">
+              <span class="inline-block w-2 h-2 rounded-full bg-[#0071E3] animate-pulse"></span>
+              <span class="text-[11px] font-semibold text-[#1D1D1F] dark:text-neutral-200 uppercase tracking-wider">Autonomous Engine 2.4 Ready</span>
+              <span class="material-symbols-outlined text-[13px] text-[#86868B]">arrow_forward</span>
+            </div>
+
+            <!-- Crisp Apple-Calibrated Typography -->
+            <h1 class="font-display text-[48px] sm:text-[56px] leading-[1.08] text-[#1D1D1F] dark:text-white max-w-4xl tracking-[-0.03em] font-semibold mb-4">
+              Your workspace. Handled.
+            </h1>
+            <p class="text-[19px] sm:text-[20px] leading-[1.4] text-[#86868B] dark:text-neutral-400 max-w-xl mx-auto mb-9 tracking-[-0.01em]">
+              Files, links, and folders organized autonomously by your team's AI agent — with human approval for every change.
+            </p>
+
+            <!-- Physical Tactile Buttons -->
+            <div class="flex flex-wrap items-center justify-center gap-3.5 mb-14">
+              <a href="/agent" class="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-full bg-[#0071E3] hover:bg-[#0077ED] text-white text-[15px] font-medium shadow-[0_1px_3px_rgba(0,113,227,0.3),inset_0_1px_0_rgba(255,255,255,0.25)] active:scale-[0.97] transition-all min-h-[44px]">
+                <span>Try the demo</span>
+                <span class="material-symbols-outlined text-[17px]">bolt</span>
+              </a>
+              <a href="/login" class="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-full bg-white dark:bg-neutral-800 text-[#1D1D1F] dark:text-white text-[15px] font-medium border border-black/[0.08] dark:border-white/10 shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:bg-neutral-50 dark:hover:bg-neutral-700 active:scale-[0.97] transition-all min-h-[44px]">
+                <span>Sign in</span>
+              </a>
+            </div>
+
+            <!-- macOS / Native Window Mockup -->
+            <div class="w-full max-w-[1040px] rounded-3xl bg-white dark:bg-[#1C1C1E] border border-black/[0.08] dark:border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04)] overflow-hidden text-left relative transition-all">
+              <!-- Window Chrome Header -->
+              <div class="h-11 bg-neutral-100/80 dark:bg-neutral-800/80 backdrop-blur-xl px-4 flex items-center justify-between border-b border-black/[0.06] dark:border-white/10">
+                <div class="flex items-center gap-2">
+                  <div class="w-3 h-3 rounded-full bg-[#FF5F56] border border-[#E0443E]/50 shadow-[inset_0_0.5px_0.5px_rgba(255,255,255,0.4)]"></div>
+                  <div class="w-3 h-3 rounded-full bg-[#FFBD2E] border border-[#DEA123]/50 shadow-[inset_0_0.5px_0.5px_rgba(255,255,255,0.4)]"></div>
+                  <div class="w-3 h-3 rounded-full bg-[#27C93F] border border-[#1AAB29]/50 shadow-[inset_0_0.5px_0.5px_rgba(255,255,255,0.4)]"></div>
+                  <span class="ml-3 text-[11px] font-medium text-[#86868B] tracking-wider uppercase">LinkVault Agent Suite — Autonomous Run #842</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-black/[0.04] dark:bg-white/[0.06] text-[#6E6E73] dark:text-neutral-300 border border-black/[0.04] dark:border-white/[0.04] flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[13px]">lock</span> Read-Write Sandboxed
+                  </span>
+                  <span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#0071E3]/10 text-[#0071E3] border border-[#0071E3]/20 flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[13px]">verified</span> Safe Share Verified
+                  </span>
+                </div>
+              </div>
+
+              <!-- Window Body -->
+              <div class="grid grid-cols-12 min-h-[420px]">
+                <!-- Inset Sidebar -->
+                <div class="col-span-3 bg-neutral-50/70 dark:bg-black/30 border-r border-black/[0.05] dark:border-white/[0.06] p-4 flex flex-col justify-between">
+                  <div class="space-y-4">
+                    <div class="flex items-center gap-2 px-2 text-[#86868B]">
+                      <span class="material-symbols-outlined text-[17px]">folder_special</span>
+                      <span class="text-[12px] font-semibold uppercase tracking-wider">Directives</span>
+                    </div>
+                    <div class="space-y-1">
+                      <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-white dark:bg-neutral-800 shadow-[0_1px_3px_rgba(0,0,0,0.04)] border border-black/[0.04] dark:border-white/10 text-[#1D1D1F] dark:text-white text-[13px] font-medium">
+                        <span class="flex items-center gap-2">
+                          <span class="material-symbols-outlined text-[17px] text-[#0071E3]">auto_mode</span>
+                          Reorg Stale Drive
+                        </span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-[#0071E3]"></span>
+                      </div>
+                      <div class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-black/[0.03] dark:hover:bg-white/[0.04] text-[#6E6E73] text-[13px] transition-all">
+                        <span class="flex items-center gap-2">
+                          <span class="material-symbols-outlined text-[17px]">shield</span>
+                          PII Vault Scans
+                        </span>
+                        <span class="text-[10px] font-semibold text-[#86868B] uppercase">Idle</span>
+                      </div>
+                      <div class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-black/[0.03] dark:hover:bg-white/[0.04] text-[#6E6E73] text-[13px] transition-all">
+                        <span class="flex items-center gap-2">
+                          <span class="material-symbols-outlined text-[17px]">share</span>
+                          Revoke Expired
+                        </span>
+                        <span class="text-[10px] font-semibold text-[#86868B] uppercase">Synced</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Agent Memory Card -->
+                  <div class="p-3 rounded-2xl bg-white dark:bg-neutral-800/80 border border-black/[0.05] dark:border-white/10 shadow-[0_1px_3px_rgba(0,0,0,0.03)] flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-xl bg-[#0071E3]/10 flex items-center justify-center text-[#0071E3]">
+                      <span class="material-symbols-outlined text-[18px]">psychology</span>
+                    </div>
+                    <div class="flex flex-col">
+                      <span class="text-[10px] font-semibold text-[#86868B] uppercase tracking-wider">Agent Memory</span>
+                      <span class="text-[13px] font-medium text-[#1D1D1F] dark:text-white">1,402 artifacts filed</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Window Content Area -->
+                <div class="col-span-9 p-6 flex flex-col justify-between bg-white dark:bg-[#1C1C1E]">
+                  <div class="space-y-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-black/[0.05] dark:border-white/[0.06]">
+                      <div>
+                        <h3 class="text-[17px] font-semibold text-[#1D1D1F] dark:text-white tracking-[-0.01em]">Pending Autonomous Operations</h3>
+                        <p class="text-[13px] text-[#86868B] mt-0.5">The agent proposed 3 file migrations based on contextual semantic relevance.</p>
+                      </div>
+                      <span class="px-3 py-1 rounded-full bg-[#F56300]/10 text-[#F56300] border border-[#F56300]/20 text-[11px] font-semibold flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-[#F56300]"></span> Needs approval
+                      </span>
+                    </div>
+
+                    <!-- Inset Grouped Rows -->
+                    <div class="space-y-2">
+                      <!-- Row 1 -->
+                      <div class="p-3.5 rounded-2xl bg-[#F5F5F7] dark:bg-white/[0.04] border border-black/[0.03] dark:border-white/[0.04] flex items-center justify-between transition-all hover:bg-neutral-100/90 dark:hover:bg-white/[0.06]">
+                        <div class="flex items-center gap-3.5 min-w-0">
+                          <div class="w-9 h-9 rounded-xl bg-white dark:bg-neutral-800 shadow-[0_1px_3px_rgba(0,0,0,0.06)] border border-black/[0.04] dark:border-white/10 flex items-center justify-center text-[#0071E3]">
+                            <span class="material-symbols-outlined text-[19px]">picture_as_pdf</span>
+                          </div>
+                          <div class="flex flex-col min-w-0">
+                            <span class="text-[14px] font-medium text-[#1D1D1F] dark:text-white truncate">Q3_Investor_Deck_vFinal_annotated.pdf</span>
+                            <span class="text-[11px] text-[#86868B] flex items-center gap-1">
+                              <span>Root / Downloads</span>
+                              <span class="material-symbols-outlined text-[11px]">arrow_forward</span>
+                              <span class="text-[#0071E3] font-medium">Shared / Series B / Decks</span>
+                            </span>
+                          </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                          <button class="px-3 py-1.5 rounded-lg bg-white dark:bg-neutral-800 text-[#1D1D1F] dark:text-white hover:bg-neutral-50 text-[13px] font-medium border border-black/[0.06] dark:border-white/10 shadow-[0_1px_2px_rgba(0,0,0,0.04)] active:scale-[0.96] transition-all min-h-[32px]" type="button">Diff</button>
+                          <button class="px-3.5 py-1.5 rounded-lg bg-[#0071E3] hover:bg-[#0077ED] text-white text-[13px] font-medium shadow-[0_1px_3px_rgba(0,113,227,0.3)] active:scale-[0.96] transition-all min-h-[32px]" type="button">Approve</button>
+                        </div>
+                      </div>
+
+                      <!-- Row 2 -->
+                      <div class="p-3.5 rounded-2xl bg-[#F5F5F7] dark:bg-white/[0.04] border border-black/[0.03] dark:border-white/[0.04] flex items-center justify-between transition-all hover:bg-neutral-100/90 dark:hover:bg-white/[0.06]">
+                        <div class="flex items-center gap-3.5 min-w-0">
+                          <div class="w-9 h-9 rounded-xl bg-white dark:bg-neutral-800 shadow-[0_1px_3px_rgba(0,0,0,0.06)] border border-black/[0.04] dark:border-white/10 flex items-center justify-center text-[#F56300]">
+                            <span class="material-symbols-outlined text-[19px]">table_chart</span>
+                          </div>
+                          <div class="flex flex-col min-w-0">
+                            <span class="text-[14px] font-medium text-[#1D1D1F] dark:text-white truncate">compensation_bands_FY25_internal.xlsx</span>
+                            <span class="text-[11px] text-[#86868B] flex items-center gap-1">
+                              <span>Public Link Generation</span>
+                              <span class="material-symbols-outlined text-[11px]">arrow_forward</span>
+                              <span class="text-[#FF3B30] font-medium">Halted: PII token detected</span>
+                            </span>
+                          </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                          <span class="px-2.5 py-1 rounded-md bg-[#FF3B30]/10 text-[#FF3B30] border border-[#FF3B30]/20 text-[11px] font-semibold">Restricted</span>
+                          <button class="px-3 py-1.5 rounded-lg bg-white dark:bg-neutral-800 text-[#6E6E73] hover:text-[#1D1D1F] text-[13px] font-medium border border-black/[0.06] dark:border-white/10 shadow-[0_1px_2px_rgba(0,0,0,0.04)] active:scale-[0.96] transition-all min-h-[32px]" type="button">Dismiss</button>
+                        </div>
+                      </div>
+
+                      <!-- Row 3 -->
+                      <div class="p-3.5 rounded-2xl bg-[#F5F5F7] dark:bg-white/[0.04] border border-black/[0.03] dark:border-white/[0.04] flex items-center justify-between transition-all">
+                        <div class="flex items-center gap-3.5 min-w-0">
+                          <div class="w-9 h-9 rounded-xl bg-white dark:bg-neutral-800 shadow-[0_1px_3px_rgba(0,0,0,0.06)] border border-black/[0.04] dark:border-white/10 flex items-center justify-center text-[#6E6E73]">
+                            <span class="material-symbols-outlined text-[19px]">code</span>
+                          </div>
+                          <div class="flex flex-col min-w-0">
+                            <span class="text-[14px] font-medium text-[#1D1D1F] dark:text-white truncate">prod_auth_spec.swagger.yaml</span>
+                            <span class="text-[11px] text-[#86868B] flex items-center gap-1">
+                              <span>Auto-tagged with metadata: API, Infrastructure, Auth-V2</span>
+                            </span>
+                          </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                          <span class="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-black/[0.04] dark:bg-white/[0.06] text-[#6E6E73]">Auto-Applied</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Footer Bar inside Mockup -->
+                  <div class="pt-4 flex items-center justify-between border-t border-black/[0.05] dark:border-white/[0.06]">
+                    <div class="flex items-center gap-2 text-[#86868B]">
+                      <span class="material-symbols-outlined text-[16px] text-[#0071E3]">verified_user</span>
+                      <span class="text-[12px]">LinkVault Sandbox Engine active. No changes execute without human token.</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <button class="px-4 py-2 rounded-xl bg-black/[0.04] dark:bg-white/[0.06] hover:bg-black/[0.07] text-[#1D1D1F] dark:text-white text-[13px] font-medium active:scale-[0.97] transition-all min-h-[36px]" type="button">Reject All</button>
+                      <button class="px-4 py-2 rounded-xl bg-[#0071E3] hover:bg-[#0077ED] text-white text-[13px] font-medium shadow-[0_1px_3px_rgba(0,113,227,0.3)] active:scale-[0.97] transition-all min-h-[36px]" type="button">Approve Batch (1)</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Feature Grids Section -->
+          <section class="py-16 space-y-24">
+            <!-- Feature 1: Oversight Layer -->
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-12 items-center">
+              <div class="md:col-span-5 space-y-4">
+                <div class="w-10 h-10 rounded-2xl bg-[#0071E3]/10 flex items-center justify-center text-[#0071E3] mb-1">
+                  <span class="material-symbols-outlined text-[22px]">front_hand</span>
+                </div>
+                <span class="text-[11px] font-semibold text-[#0071E3] uppercase tracking-wider">Oversight Layer</span>
+                <h2 class="text-[32px] sm:text-[36px] font-semibold text-[#1D1D1F] dark:text-white tracking-[-0.02em] leading-tight">
+                  Agent with human approval
+                </h2>
+                <p class="text-[17px] leading-relaxed text-[#86868B] dark:text-neutral-400">
+                  You retain complete oversight. Every proposed move, rename, or link generation is previewed before execution. The autonomous agent acts as a world-class curator that never oversteps boundaries.
+                </p>
+                <ul class="pt-2 space-y-2.5 text-[#515154] dark:text-neutral-300 text-[14px]">
+                  <li class="flex items-center gap-2.5">
+                    <span class="material-symbols-outlined text-[#0071E3] text-[18px]">check_circle</span>
+                    <span>Explicit granular approval queues for every file move</span>
+                  </li>
+                  <li class="flex items-center gap-2.5">
+                    <span class="material-symbols-outlined text-[#0071E3] text-[18px]">check_circle</span>
+                    <span>One-click bulk authorisations with smart semantic rollback</span>
+                  </li>
+                  <li class="flex items-center gap-2.5">
+                    <span class="material-symbols-outlined text-[#0071E3] text-[18px]">check_circle</span>
+                    <span>Configurable auto-delegation thresholds per department</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div class="md:col-span-7">
+                <div class="p-6 rounded-3xl bg-white dark:bg-[#1C1C1E] border border-black/[0.06] dark:border-white/10 shadow-[0_12px_32px_rgba(0,0,0,0.04)] overflow-hidden relative">
+                  <div class="flex items-center justify-between mb-4">
+                    <span class="text-[11px] font-semibold text-[#86868B] uppercase tracking-wider">Intent Proposal Canvas</span>
+                    <span class="text-[12px] text-[#0071E3] font-semibold">99.4% confidence score</span>
+                  </div>
+                  <img class="w-full h-72 object-cover rounded-2xl shadow-inner mb-4 border border-black/[0.04]" data-alt="An executive workspace displaying an AI curation file interface with sleek typography, clean rows of documents, transparent pill tags, and soft ambient lighting in minimal Apple-inspired aesthetics." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBGJI_Rz5-CIHen43L4Erdm40VMH2zjOMLQIhYjUJufV1gHfT28EiE9HZP-gTX6pNA7H2xGeb2P-6AanrYX_oWct9tESYCAu14yjzpoHUtvsoWJxeMQ62sTsQYwLnpOCr127iUFSNUvaf6zkZryuPmFEU_a3z6h9AsDNTqugeTLIguKMux9SMyqlrIWLt1AntgCha3WAkp7xpWgMYYLoa_XeVIsojazMOu1vxyY6Nc"/>
+                  <div class="p-4 rounded-2xl bg-[#F5F5F7] dark:bg-white/[0.04] border border-black/[0.03] dark:border-white/[0.04] flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                      <span class="material-symbols-outlined text-[#0071E3] text-[20px]">published_with_changes</span>
+                      <div class="flex flex-col">
+                        <span class="text-[13px] font-medium text-[#1D1D1F] dark:text-white">Reorganize design workspace hierarchy</span>
+                        <span class="text-[11px] text-[#86868B]">84 assets grouped by design tokens & release milestones</span>
+                      </div>
+                    </div>
+                    <button class="px-3.5 py-1.5 rounded-xl bg-white dark:bg-neutral-800 text-[#1D1D1F] dark:text-white text-[13px] font-medium hover:bg-neutral-50 border border-black/[0.06] dark:border-white/10 shadow-[0_1px_2px_rgba(0,0,0,0.04)] active:scale-[0.96] transition-all min-h-[32px]" type="button">Review Diff</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Feature 2: Safe Share Protection -->
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-12 items-center">
+              <div class="md:col-span-7 order-2 md:order-1">
+                <div class="p-6 rounded-3xl bg-white dark:bg-[#1C1C1E] border border-black/[0.06] dark:border-white/10 shadow-[0_12px_32px_rgba(0,0,0,0.04)] overflow-hidden relative">
+                  <div class="flex items-center justify-between mb-4">
+                    <span class="text-[11px] font-semibold text-[#86868B] uppercase tracking-wider">Proactive Interceptor</span>
+                    <span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#34C759]/10 text-[#34C759] border border-[#34C759]/20">Zero Leaks Active</span>
+                  </div>
+                  <img class="w-full h-72 object-cover rounded-2xl shadow-inner mb-4 border border-black/[0.04]" data-alt="Modern cybersecurity data visualization displaying real-time leak prevention filters, cryptographic tokens, safe file shields, and ambient blue and amber luminescence on clean light surfaces." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBk-ma8a7auS3oxWbmhCMauS4pXpEJ5xOJYKEb4_IHLSBd-VuvaZiruNANw_juJXIy516n6fYnf2N_dpe9C1dKuZ-ZmS5-bC7stpgO0sTNyH6zdpRAGXG6tgsFlNEU2qbokVst5YgB0RSbM8QrBxw98ImhNNVNlfUq1HBeA3MbbCRTydw_1gY5-X7EopyIjfMxPMfr_Ucam1q8LQxQuIc9P9eCR0whcGCNBDmA1VR8"/>
+                  <div class="grid grid-cols-3 gap-3">
+                    <div class="p-3.5 rounded-2xl bg-[#F5F5F7] dark:bg-white/[0.04] border border-black/[0.03] dark:border-white/[0.04] text-center">
+                      <span class="block text-[22px] font-semibold text-[#1D1D1F] dark:text-white tracking-tight">100%</span>
+                      <span class="text-[11px] text-[#86868B]">PII Pre-Screen</span>
+                    </div>
+                    <div class="p-3.5 rounded-2xl bg-[#F5F5F7] dark:bg-white/[0.04] border border-black/[0.03] dark:border-white/[0.04] text-center">
+                      <span class="block text-[22px] font-semibold text-[#1D1D1F] dark:text-white tracking-tight">&lt;2ms</span>
+                      <span class="text-[11px] text-[#86868B]">Scan Latency</span>
+                    </div>
+                    <div class="p-3.5 rounded-2xl bg-[#F5F5F7] dark:bg-white/[0.04] border border-black/[0.03] dark:border-white/[0.04] text-center">
+                      <span class="block text-[22px] font-semibold text-[#1D1D1F] dark:text-white tracking-tight">0</span>
+                      <span class="text-[11px] text-[#86868B]">Unintended Leaks</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="md:col-span-5 space-y-4 order-1 md:order-2">
+                <div class="w-10 h-10 rounded-2xl bg-[#F56300]/10 flex items-center justify-center text-[#F56300] mb-1">
+                  <span class="material-symbols-outlined text-[22px]">gshield</span>
+                </div>
+                <span class="text-[11px] font-semibold text-[#F56300] uppercase tracking-wider">Autonomous Guardrail</span>
+                <h2 class="text-[32px] sm:text-[36px] font-semibold text-[#1D1D1F] dark:text-white tracking-[-0.02em] leading-tight">
+                  Safe Share protection
+                </h2>
+                <p class="text-[17px] leading-relaxed text-[#86868B] dark:text-neutral-400">
+                  Proactive leak prevention. Automatically halts links if sensitive API tokens, passwords, or PII are found inside targeted documents or unencrypted notes.
+                </p>
+                <ul class="pt-2 space-y-2.5 text-[#515154] dark:text-neutral-300 text-[14px]">
+                  <li class="flex items-center gap-2.5">
+                    <span class="material-symbols-outlined text-[#0071E3] text-[18px]">check_circle</span>
+                    <span>Real-time heuristic scanning of codebases, PDFs, and docs</span>
+                  </li>
+                  <li class="flex items-center gap-2.5">
+                    <span class="material-symbols-outlined text-[#0071E3] text-[18px]">check_circle</span>
+                    <span>Instant redaction suggestions with smart token masking</span>
+                  </li>
+                  <li class="flex items-center gap-2.5">
+                    <span class="material-symbols-outlined text-[#0071E3] text-[18px]">check_circle</span>
+                    <span>Automated expiry timers on sensitive multi-party links</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- Feature 3: Immutable Audit Trail -->
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-12 items-center">
+              <div class="md:col-span-5 space-y-4">
+                <div class="w-10 h-10 rounded-2xl bg-black/[0.05] dark:bg-white/[0.08] flex items-center justify-center text-[#1D1D1F] dark:text-white mb-1">
+                  <span class="material-symbols-outlined text-[22px]">receipt_long</span>
+                </div>
+                <span class="text-[11px] font-semibold text-[#86868B] uppercase tracking-wider">Enterprise Compliance</span>
+                <h2 class="text-[32px] sm:text-[36px] font-semibold text-[#1D1D1F] dark:text-white tracking-[-0.02em] leading-tight">
+                  Full immutable audit trail
+                </h2>
+                <p class="text-[17px] leading-relaxed text-[#86868B] dark:text-neutral-400">
+                  Granular logs showing who authorized what, exact timestamps, and agent action receipts. Exportable cryptographically-signed records for SOC 2 Type II and ISO 27001 readiness.
+                </p>
+                <ul class="pt-2 space-y-2.5 text-[#515154] dark:text-neutral-300 text-[14px]">
+                  <li class="flex items-center gap-2.5">
+                    <span class="material-symbols-outlined text-[#0071E3] text-[18px]">check_circle</span>
+                    <span>Cryptographic hash signatures for every recorded shift</span>
+                  </li>
+                  <li class="flex items-center gap-2.5">
+                    <span class="material-symbols-outlined text-[#0071E3] text-[18px]">check_circle</span>
+                    <span>Historical point-in-time state reconstitution with instant rollbacks</span>
+                  </li>
+                  <li class="flex items-center gap-2.5">
+                    <span class="material-symbols-outlined text-[#0071E3] text-[18px]">check_circle</span>
+                    <span>Continuous SIEM integration via enterprise Webhook streams</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div class="md:col-span-7">
+                <div class="p-6 rounded-3xl bg-white dark:bg-[#1C1C1E] border border-black/[0.06] dark:border-white/10 shadow-[0_12px_32px_rgba(0,0,0,0.04)] overflow-hidden relative">
+                  <div class="flex items-center justify-between mb-4">
+                    <span class="text-[11px] font-semibold text-[#86868B] uppercase tracking-wider">Immutable Event Feed</span>
+                    <div class="flex items-center gap-2">
+                      <span class="w-2 h-2 rounded-full bg-[#34C759]"></span>
+                      <span class="text-[11px] font-semibold text-[#1D1D1F] dark:text-white">Chain Intact</span>
+                    </div>
+                  </div>
+                  <img class="w-full h-72 object-cover rounded-2xl shadow-inner mb-4 border border-black/[0.04]" data-alt="A clean audit ledger interface rendered with high-precision timestamp typography, digital signature hash badges, calm grey cards, and soft ambient drop shadows in an executive desk aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBiNwM_CNPP_OFKS_RnUDxaOAH5k71xPl2nEhB_yMl3l0oV_bghG1rISvVBHGR-c_vi9kAMJNS0gEFbLAeD0VTBCQ3dGhYfLuC5PGzMTmIUklDahRoe0frZSlvnpEmeJDdtx-tNOR41Lm-cIjKoYTrQwQkB_vgZYDz2UR_eNnawemZ2TOUb1-LLa7Dv9h6tGKkIXRKSRDXWX9gmD2UahCi4n6lXtjlzvn9BnKQaoFg"/>
+                  <div class="space-y-2">
+                    <div class="p-3 rounded-xl bg-[#F5F5F7] dark:bg-white/[0.04] border border-black/[0.03] dark:border-white/[0.04] flex items-center justify-between text-[13px]">
+                      <div class="flex items-center gap-2.5">
+                        <span class="text-[11px] font-mono text-[#86868B]">14:28:02.19</span>
+                        <span class="font-medium text-[#1D1D1F] dark:text-white">Admin approved file re-indexing (#841-A)</span>
+                      </div>
+                      <span class="text-[11px] font-mono font-medium text-[#0071E3]">SHA256: 9e4f..8b21</span>
+                    </div>
+                    <div class="p-3 rounded-xl bg-[#F5F5F7] dark:bg-white/[0.04] border border-black/[0.03] dark:border-white/[0.04] flex items-center justify-between text-[13px]">
+                      <div class="flex items-center gap-2.5">
+                        <span class="text-[11px] font-mono text-[#86868B]">14:15:33.91</span>
+                        <span class="font-medium text-[#1D1D1F] dark:text-white">Agent blocked non-TLS outbound sync payload</span>
+                      </div>
+                      <span class="text-[11px] font-mono font-medium text-[#F56300]">SHA256: 3a10..ec44</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Call to Action Banner -->
+          <section class="py-12">
+            <div class="p-12 sm:p-16 rounded-3xl bg-gradient-to-b from-white to-[#F5F5F7] dark:from-[#1C1C1E] dark:to-[#121214] border border-black/[0.08] dark:border-white/10 shadow-[0_20px_48px_rgba(0,0,0,0.06)] text-center relative overflow-hidden">
+              <div class="relative z-10 max-w-2xl mx-auto space-y-6">
+                <h2 class="text-[34px] sm:text-[42px] font-semibold text-[#1D1D1F] dark:text-white tracking-[-0.025em] leading-tight">
+                  Ready to put your digital workspace on autopilot?
+                </h2>
+                <p class="text-[18px] text-[#86868B] dark:text-neutral-400 leading-relaxed">
+                  Deploy LinkVault alongside Google Drive, Microsoft OneDrive, or Notion in under five minutes.
+                </p>
+                <div class="pt-2 flex flex-wrap items-center justify-center gap-3.5">
+                  <a href="/login" class="px-8 py-3.5 rounded-full bg-[#0071E3] hover:bg-[#0077ED] text-white text-[15px] font-medium shadow-[0_2px_8px_rgba(0,113,227,0.3)] active:scale-[0.97] transition-all min-h-[44px]">
+                    Start Free 14-Day Trial
+                  </a>
+                  <a href="/login" class="px-8 py-3.5 rounded-full bg-white dark:bg-neutral-800 text-[#1D1D1F] dark:text-white text-[15px] font-medium border border-black/[0.08] dark:border-white/10 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:bg-neutral-50 dark:hover:bg-neutral-700 active:scale-[0.97] transition-all min-h-[44px]">
+                    Book Enterprise Demo
+                  </a>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- System Footer -->
+          <footer class="pt-12 pb-16 mt-8 space-y-8 border-t border-black/[0.06] dark:border-white/10">
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-8 pb-8">
+              <div class="col-span-2 space-y-3">
+                <div class="flex items-center gap-2.5">
+                  <span class="text-[17px] font-semibold text-[#1D1D1F] dark:text-white tracking-tight">LinkVault</span>
+                  <span class="px-2 py-0.5 rounded-full bg-black/[0.05] dark:bg-white/[0.08] text-[11px] font-medium text-[#86868B]">v2.4</span>
+                </div>
+                <p class="text-[13px] leading-relaxed text-[#86868B] max-w-xs">
+                  Autonomous organizational intelligence built for precision teams with human oversight at its core.
+                </p>
+              </div>
+
+              <div class="space-y-3">
+                <span class="text-[11px] font-semibold text-[#86868B] uppercase tracking-wider">Product</span>
+                <ul class="space-y-2 text-[13px] text-[#6E6E73] dark:text-neutral-400">
+                  <li><a class="hover:text-[#1D1D1F] dark:hover:text-white transition-colors" href="/agent">Agent Workspace</a></li>
+                  <li><a class="hover:text-[#1D1D1F] dark:hover:text-white transition-colors" href="/agent">Safe Share Engine</a></li>
+                  <li><a class="hover:text-[#1D1D1F] dark:hover:text-white transition-colors" href="/audit">Immutable Audits</a></li>
+                  <li><a class="hover:text-[#1D1D1F] dark:hover:text-white transition-colors" href="/subscription">Pricing Tiers</a></li>
+                </ul>
+              </div>
+
+              <div class="space-y-3">
+                <span class="text-[11px] font-semibold text-[#86868B] uppercase tracking-wider">Security & Trust</span>
+                <ul class="space-y-2 text-[13px] text-[#6E6E73] dark:text-neutral-400">
+                  <li><a class="hover:text-[#1D1D1F] dark:hover:text-white transition-colors" href="#">SOC 2 Type II</a></li>
+                  <li><a class="hover:text-[#1D1D1F] dark:hover:text-white transition-colors" href="#">ISO 27001 Certified</a></li>
+                  <li><a class="hover:text-[#1D1D1F] dark:hover:text-white transition-colors" href="#">GDPR & HIPAA</a></li>
+                  <li><a class="hover:text-[#1D1D1F] dark:hover:text-white transition-colors" href="#">Security Whitepaper</a></li>
+                </ul>
+              </div>
+
+              <div class="space-y-3">
+                <span class="text-[11px] font-semibold text-[#86868B] uppercase tracking-wider">Appearance</span>
+                <!-- Segmented Control for Theme -->
+                <div class="p-0.5 rounded-full bg-black/[0.05] dark:bg-white/[0.08] inline-flex items-center border border-black/[0.03] dark:border-white/[0.04]">
+                  <button onclick="document.documentElement.classList.remove('dark')" class="px-3 py-1 rounded-full bg-white dark:bg-neutral-800 text-[#1D1D1F] dark:text-white shadow-[0_1px_3px_rgba(0,0,0,0.08)] text-[12px] font-medium flex items-center gap-1.5 transition-all" type="button">
+                    <span class="material-symbols-outlined text-[13px]">light_mode</span> Light
+                  </button>
+                  <button onclick="document.documentElement.classList.add('dark')" class="px-3 py-1 rounded-full text-[#86868B] hover:text-[#1D1D1F] dark:hover:text-white text-[12px] font-medium flex items-center gap-1.5 transition-colors" type="button">
+                    <span class="material-symbols-outlined text-[13px]">dark_mode</span> Dark
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-[12px] text-[#86868B] border-t border-black/[0.04] dark:border-white/[0.06]">
+              <div class="flex items-center gap-6">
+                <span>© 2025 LinkVault Inc. All rights reserved.</span>
+                <a class="hover:text-[#1D1D1F] dark:hover:text-white transition-colors" href="#">Privacy Policy</a>
+                <a class="hover:text-[#1D1D1F] dark:hover:text-white transition-colors" href="#">Terms of Service</a>
+                <a class="hover:text-[#1D1D1F] dark:hover:text-white transition-colors" href="#">System Status</a>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-[#34C759]"></span>
+                <span class="text-[#6E6E73] dark:text-neutral-400 font-medium">All Systems Operational — US-East Cloud</span>
+              </div>
+            </div>
+          </footer>
+
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
+
