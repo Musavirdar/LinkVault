@@ -129,9 +129,9 @@ function SearchBox({ onNavigate }: { onNavigate: (href: string) => void }) {
   return (
     <div ref={containerRef} className="relative px-3 pb-2">
       <div className={cn(
-        'flex items-center gap-2 px-3 py-2 rounded-lg transition-all',
-        'bg-[var(--bg-primary)] border',
-        open ? 'border-[var(--accent-primary)]/60' : 'border-[var(--border-subtle)]'
+        'flex items-center gap-2 px-3 py-2 rounded-xl transition-all duration-150',
+        'bg-black/[0.04] dark:bg-white/[0.06] border',
+        open ? 'border-[#0071E3] ring-2 ring-[#0071E3]/20' : 'border-black/[0.06] dark:border-white/10 hover:border-black/[0.12] dark:hover:border-white/20'
       )}>
         <Search className="w-3.5 h-3.5 text-[var(--text-muted)] flex-shrink-0" />
         <input
@@ -156,8 +156,8 @@ function SearchBox({ onNavigate }: { onNavigate: (href: string) => void }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.15 }}
-            className="absolute left-3 right-3 top-full mt-1 z-50 rounded-lg overflow-hidden shadow-xl"
-            style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-strong)' }}
+            
+            className="absolute left-3 right-3 top-full mt-1.5 z-50 rounded-2xl overflow-hidden shadow-[0_16px_36px_rgba(0,0,0,0.18)] bg-white/95 dark:bg-[#1C1C1E]/95 backdrop-blur-2xl border border-black/[0.08] dark:border-white/12"
           >
             {results.map((r) => (
               <button
@@ -202,7 +202,7 @@ export function ChannelSidebar() {
       className={cn(
         'h-full flex-shrink-0',
         'flex flex-col',
-        'bg-bg-secondary border-r border-border-subtle',
+        'bg-white/70 dark:bg-[#1C1C1E]/70 backdrop-blur-2xl border-r border-black/[0.06] dark:border-white/10',
         'overflow-hidden'
       )}
       variants={sidebarVariants}
@@ -212,7 +212,7 @@ export function ChannelSidebar() {
       {/* Header */}
       <div className={cn(
         'flex items-center justify-between p-4',
-        'border-b border-border-subtle'
+        'border-b border-black/[0.06] dark:border-white/10'
       )}>
         {!sidebarCollapsed && (
           <motion.div
@@ -227,7 +227,7 @@ export function ChannelSidebar() {
             {isTeam && (
               <span
                 className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full"
-                style={{ background: '#5865F220', color: '#818CF8', border: '1px solid #5865F230' }}
+                style={{ background: 'rgba(0, 113, 227, 0.1)', color: '#0071E3', border: '1px solid rgba(0, 113, 227, 0.2)' }}
               >
                 Team
               </span>
@@ -240,7 +240,7 @@ export function ChannelSidebar() {
           aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           className={cn(
             'p-1.5 rounded-md',
-            'text-text-muted hover:text-text-primary hover:bg-bg-tertiary',
+            'text-muted-foreground hover:text-foreground hover:bg-black/[0.04] dark:hover:bg-white/10 rounded-xl',
             'transition-colors duration-200',
             sidebarCollapsed && 'mx-auto'
           )}

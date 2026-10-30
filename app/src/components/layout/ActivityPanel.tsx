@@ -93,16 +93,16 @@ export function ActivityPanel() {
   // Dark/Light: collapsible right panel
   return (
     <motion.aside
-      className={cn('h-full flex-shrink-0 flex flex-row bg-bg-secondary border-l border-border-subtle')}
+      className={cn('h-full flex-shrink-0 flex flex-row bg-white/70 dark:bg-[#1C1C1E]/70 backdrop-blur-2xl border-l border-black/[0.06] dark:border-white/10')}
       variants={activityPanelVariants}
       initial="expanded"
       animate={activityPanelCollapsed ? 'collapsed' : 'expanded'}
     >
       {/* Toggle button rail */}
-      <div className="w-12 flex-shrink-0 flex flex-col items-center pt-4">
+      <div className="w-12 flex-shrink-0 flex flex-col items-center pt-4 border-r border-black/[0.04] dark:border-white/[0.06]">
         <motion.button
           onClick={toggleActivityPanel}
-          className="p-1.5 rounded-md text-text-muted hover:text-text-primary hover:bg-bg-tertiary transition-colors duration-200"
+          className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-black/[0.04] dark:hover:bg-white/10 transition-colors duration-200"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           title={activityPanelCollapsed ? 'Open Activity Feed' : 'Close Activity Feed'}
@@ -123,7 +123,7 @@ export function ActivityPanel() {
             exit={{ opacity: 0, x: 16 }}
             transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
           >
-            <div className="flex items-center px-4 py-4 border-b border-border-subtle">
+            <div className="flex items-center px-4 py-4 border-b border-black/[0.06] dark:border-white/10">
               <h3 className="text-sm font-semibold text-text-primary uppercase tracking-wider">Activity Feed</h3>
             </div>
 
@@ -131,7 +131,7 @@ export function ActivityPanel() {
               <div className="p-4 space-y-4">
                 {feedContent(false)}
               </div>
-              <div className="mt-2 pt-4 border-t border-border-subtle">
+              <div className="mt-2 pt-4 border-t border-black/[0.06] dark:border-white/10">
                 <div className="px-4 pb-3">
                   <h4 className="text-sm font-semibold text-text-primary uppercase tracking-wider">
                     Online · {onlineMembers.filter(m => m.status === 'online').length}
