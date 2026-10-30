@@ -86,6 +86,14 @@ public class AuditLog
     [ForeignKey("ResourceId")]
     public virtual Resource? Resource { get; set; }
     
+    // Agent execution provenance
+    public bool IsViaAgent { get; set; } = false;
+    
+    public Guid? AgentPlanId { get; set; }
+    
+    [MaxLength(100)]
+    public string? AgentToolName { get; set; }
+    
     // Timestamp
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

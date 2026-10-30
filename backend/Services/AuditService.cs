@@ -66,6 +66,9 @@ public class AuditService : IAuditService
         if (filter.EntityId.HasValue)
             query = query.Where(a => a.EntityId == filter.EntityId.Value);
 
+        if (filter.IsViaAgent.HasValue)
+            query = query.Where(a => a.IsViaAgent == filter.IsViaAgent.Value);
+
         if (filter.FromDate.HasValue)
             query = query.Where(a => a.CreatedAt >= filter.FromDate.Value);
 
@@ -112,6 +115,9 @@ public class AuditService : IAuditService
         var monthCount = await _context.AuditLogs
             .CountAsync(a => a.OrganizationId == organizationId && a.CreatedAt >= monthAgo);
 
+        var agentCount = await _context.AuditLogs
+            .CountAsync(a => a.OrganizationId == organizationId && a.IsViaAgent);
+
         var actionsByType = await _context.AuditLogs
             .Where(a => a.OrganizationId == organizationId && a.CreatedAt >= monthAgo)
             .GroupBy(a => a.ActionType)
@@ -132,6 +138,7 @@ public class AuditService : IAuditService
             TotalActionsToday = todayCount,
             TotalActionsThisWeek = weekCount,
             TotalActionsThisMonth = monthCount,
+            TotalAgentActions = agentCount,
             ActionsByType = actionsByType,
             ActionsByUser = actionsByUser
         };
@@ -139,7 +146,6 @@ public class AuditService : IAuditService
 
     public async Task<List<AuditLogDto>> GetRecentActivityAsync(Guid organizationId, int limit = 20)
     {
-        // Materialise first, then map — avoids EF Core instance-method LINQ translation error
         var raw = await _context.AuditLogs
             .Where(a => a.OrganizationId == organizationId)
             .Include(a => a.User)
@@ -165,6 +171,8 @@ public class AuditService : IAuditService
             IpAddress = auditLog.IpAddress,
             UserId = auditLog.UserId,
             UserName = auditLog.User?.DisplayName ?? auditLog.User?.Username,
+            IsViaAgent = auditLog.IsViaAgent,
+            AgentToolName = auditLog.AgentToolName,
             CreatedAt = auditLog.CreatedAt
         };
     }

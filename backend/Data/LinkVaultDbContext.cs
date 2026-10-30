@@ -1,3 +1,4 @@
+using LinkVaultApi.Agent.Models;
 using LinkVaultApi.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,6 +27,9 @@ public class LinkVaultDbContext : DbContext
     public DbSet<Transfer> Transfers { get; set; } = null!;
     public DbSet<TransferFile> TransferFiles { get; set; } = null!;
     public DbSet<DownloadTicket> DownloadTickets { get; set; } = null!;
+    public DbSet<AgentActionPlan> AgentActionPlans { get; set; } = null!;
+    public DbSet<PlanStep> PlanSteps { get; set; } = null!;
+    public DbSet<SafeShareScan> SafeShareScans { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -246,5 +250,36 @@ public class LinkVaultDbContext : DbContext
                 IsSystemRole = true
             }
         );
+
+        // AgentActionPlan indexes & relationships
+        modelBuilder.Entity<AgentActionPlan>(entity =>
+        {
+            entity.HasIndex(p => p.OrganizationId);
+            entity.HasIndex(p => p.UserId);
+            entity.HasIndex(p => p.Status);
+            entity.HasMany(p => p.Steps)
+                .WithOne(s => s.Plan)
+                .HasForeignKey(s => s.PlanId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // PlanStep indexes
+        modelBuilder.Entity<PlanStep>(entity =>
+        {
+            entity.HasIndex(s => s.PlanId);
+            entity.HasIndex(s => new { s.PlanId, s.StepNumber });
+        });
+
+        // SafeShareScan indexes
+        modelBuilder.Entity<SafeShareScan>(entity =>
+        {
+            entity.HasIndex(s => s.ResourceId);
+            entity.HasIndex(s => s.ScannedByUserId);
+            entity.HasIndex(s => s.Status);
+        });
+
+        // AuditLog Agent index
+        modelBuilder.Entity<AuditLog>()
+            .HasIndex(a => a.IsViaAgent);
     }
 }

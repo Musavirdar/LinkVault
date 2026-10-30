@@ -1,4 +1,7 @@
 using System.Text;
+using LinkVaultApi.Agent.Hubs;
+using LinkVaultApi.Agent.Models;
+using LinkVaultApi.Agent.Services;
 using LinkVaultApi.Data;
 using LinkVaultApi.Hubs;
 using LinkVaultApi.Middleware;
@@ -138,6 +141,12 @@ builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddSingleton<IStorageProvider, LocalStorageProvider>();
 builder.Services.AddSingleton<IFileValidationService, FileValidationService>();
 
+// Meta Llama & Workspace Agent Services
+builder.Services.Configure<MetaLlamaConfig>(builder.Configuration.GetSection(MetaLlamaConfig.SectionName));
+builder.Services.AddHttpClient<IMetaLlamaClient, MetaLlamaClient>();
+builder.Services.AddScoped<ISafeShareGuard, SafeShareGuard>();
+builder.Services.AddScoped<IVaultAgentService, VaultAgentService>();
+
 // Rate limiting: 100 requests per minute per IP globally, 10 req/min for auth
 builder.Services.AddRateLimiter(options =>
 {
@@ -258,6 +267,7 @@ app.MapHealthChecks("/health");
 // SignalR hubs
 app.MapHub<ChatHub>("/hubs/chat");
 app.MapHub<ActivityHub>("/hubs/activity");
+app.MapHub<AgentHub>("/hubs/agent");
 
 app.Run();
 
