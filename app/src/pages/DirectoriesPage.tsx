@@ -20,7 +20,7 @@ interface Directory {
     createdAt: string;
 }
 
-const DIR_COLORS = ['#5865F2', '#3BA55D', '#FAA61A', '#ED4245', '#8B5CF6', '#10B981', '#F59E0B'];
+const DIR_COLORS = ['#0071E3', '#34C759', '#FF9500', '#FF3B30', '#AF52DE', '#5856D6', '#0A84FF'];
 
 export function DirectoriesPage() {
     const { permissions } = useStore();
@@ -29,7 +29,7 @@ export function DirectoriesPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [showForm, setShowForm] = useState(false);
-    const [form, setForm] = useState({ name: '', description: '', color: '#5865F2', isPublic: false });
+    const [form, setForm] = useState({ name: '', description: '', color: '#0071E3', isPublic: false });
     const [saving, setSaving] = useState(false);
     const [formError, setFormError] = useState('');
     const [selected, setSelected] = useState<string | null>(null);
@@ -56,7 +56,7 @@ export function DirectoriesPage() {
         await directoriesApi.create(form);
         setSaving(false);
         setShowForm(false);
-        setForm({ name: '', description: '', color: '#5865F2', isPublic: false });
+        setForm({ name: '', description: '', color: '#0071E3', isPublic: false });
         load();
     };
 
@@ -163,13 +163,13 @@ export function DirectoriesPage() {
                                     )}
                                 >
                                     {/* Color bar */}
-                                    <div className="absolute top-0 left-0 right-0 h-1 rounded-t-xl" style={{ backgroundColor: dir.color || '#5865F2' }} />
+                                    <div className="absolute top-0 left-0 right-0 h-1 rounded-t-xl" style={{ backgroundColor: dir.color || '#0071E3' }} />
 
                                     <div className="flex items-start justify-between mt-1">
                                         <div className="flex items-center gap-3">
                                             {selected === dir.id
-                                                ? <FolderOpen className="w-6 h-6" style={{ color: dir.color || '#5865F2' }} />
-                                                : <Folder className="w-6 h-6" style={{ color: dir.color || '#5865F2' }} />
+                                                ? <FolderOpen className="w-6 h-6" style={{ color: dir.color || '#0071E3' }} />
+                                                : <Folder className="w-6 h-6" style={{ color: dir.color || '#0071E3' }} />
                                             }
                                             <div>
                                                 <div className="font-semibold text-[var(--text-primary)]">{dir.name}</div>

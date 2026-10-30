@@ -29,7 +29,7 @@ export function ProfileEditorPage() {
     backgroundType: 'Gradient',
     backgroundValue: PRESET_GRADIENTS[0],
     buttonStyle: 'Rounded',
-    buttonColor: '#6366F1',
+    buttonColor: '#0071E3',
     buttonTextColor: '#FFFFFF',
     fontFamily: 'Inter',
     profileLayout: 'List',

@@ -10,7 +10,7 @@ import {
 
 /* ─── mock public content grid items ─── */
 const GRID_ITEMS = [
-  { id: 1, type: 'link', title: 'Design Resources Hub', desc: 'Curated Figma, icons & fonts', views: '12.4k', color: '#5865F2', icon: Link2 },
+  { id: 1, type: 'link', title: 'Design Resources Hub', desc: 'Curated Figma, icons & fonts', views: '12.4k', color: '#0071E3', icon: Link2 },
   { id: 2, type: 'doc', title: 'API Integration Guide', desc: 'Step-by-step REST docs', views: '8.1k', color: '#10B981', icon: FileText },
   { id: 3, type: 'folder', title: 'Brand Assets 2024', desc: 'Logos, colors, typography', views: '5.3k', color: '#F59E0B', icon: Folder },
   { id: 4, type: 'link', title: 'SaaS Marketing Toolkit', desc: 'Templates & copy resources', views: '21.7k', color: '#EC4899', icon: Link2 },
@@ -23,7 +23,7 @@ const GRID_ITEMS = [
 
 const FEATURES = [
   {
-    icon: Link2, color: '#5865F2',
+    icon: Link2, color: '#0071E3',
     title: 'Smart Link Management',
     desc: 'Organize, tag, and share your links with powerful filtering and analytics.'
   },
@@ -59,7 +59,7 @@ const PLANS = [
     name: 'Individual',
     icon: UserCircle,
     price: 'Free',
-    color: '#5865F2',
+    color: '#0071E3',
     desc: 'Perfect for personal link & doc sharing',
     features: ['Link management', 'Doc Share Tree', 'Public sharing', '5 GB storage'],
     cta: 'Get Started Free',
@@ -117,7 +117,7 @@ export function LandingPage() {
         <div className="flex items-center gap-2.5">
           <img src="/logo.png" alt="LinkVault" className="w-8 h-8 rounded-lg" />
           <span className="font-bold text-lg tracking-tight" style={{ color: 'var(--text-primary)' }}>
-            Link<span style={{ color: '#5865F2' }}>Vault</span>
+            Link<span style={{ color: '#0071E3' }}>Vault</span>
           </span>
         </div>
 
@@ -140,7 +140,7 @@ export function LandingPage() {
             whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
             onClick={() => navigate('/login')}
             className="px-4 py-2 rounded-lg text-sm font-semibold text-white"
-            style={{ background: 'linear-gradient(135deg, #5865F2, #7C3AED)', boxShadow: '0 4px 16px #5865F240' }}
+            style={{ background: '#0071E3', boxShadow: '0 4px 16px #5865F240' }}
           >
             Get Started
           </motion.button>
@@ -219,7 +219,7 @@ export function LandingPage() {
               whileTap={{ scale: 0.97 }}
               onClick={() => navigate('/login')}
               className="flex items-center gap-2 px-7 py-4 rounded-2xl font-semibold text-base text-white"
-              style={{ background: 'linear-gradient(135deg, #5865F2, #7C3AED)', boxShadow: '0 4px 24px #5865F240' }}
+              style={{ background: '#0071E3', boxShadow: '0 4px 24px #5865F240' }}
             >
               Start for free
               <ArrowRight className="w-4 h-4" />
@@ -521,7 +521,7 @@ export function LandingPage() {
             whileTap={{ scale: 0.97 }}
             onClick={() => navigate('/login')}
             className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl font-bold text-base text-white"
-            style={{ background: 'linear-gradient(135deg, #5865F2, #7C3AED)', boxShadow: '0 4px 24px #5865F240' }}
+            style={{ background: '#0071E3', boxShadow: '0 4px 24px #5865F240' }}
           >
             Start for free — no credit card needed
             <ArrowRight className="w-5 h-5" />

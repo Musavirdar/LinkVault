@@ -25,10 +25,11 @@ export function StatCard({ stat, index = 0 }: StatCardProps) {
   return (
     <motion.div
       className={cn(
-        'relative rounded-lg p-5',
-        'bg-bg-secondary',
-        'border border-border-subtle',
-        'transition-colors duration-200'
+        'relative rounded-2xl p-5',
+        'bg-card text-card-foreground',
+        'border border-black/[0.06] dark:border-white/10',
+        'shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]',
+        'transition-all duration-200'
       )}
       variants={staggerItem}
       whileHover={{ y: -2, borderColor: 'var(--accent-primary)' }}
@@ -36,9 +37,7 @@ export function StatCard({ stat, index = 0 }: StatCardProps) {
     >
       {/* Icon */}
       <div className="
-        w-10 h-10 rounded-lg mb-4
-        flex items-center justify-center
-        bg-bg-tertiary
+        w-10 h-10 rounded-xl mb-3 flex items-center justify-center bg-black/[0.04] dark:bg-white/10 text-foreground
       ">
         <Icon className="w-5 h-5 text-text-secondary" />
       </div>

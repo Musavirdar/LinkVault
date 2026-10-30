@@ -39,7 +39,7 @@ export function SubscriptionPage() {
     };
 
     return (
-        <div className="max-w-6xl mx-auto space-y-8 p-4 pt-12">
+        <div className="w-full max-w-[1100px] mx-auto space-y-8 space-y-8 p-4 pt-12">
             <div className="text-center space-y-4 mb-16">
                 <h1 className="text-4xl font-extrabold text-[var(--text-primary)] tracking-tight">Upgrade your workspace</h1>
                 <p className="text-lg text-[var(--text-secondary)] max-w-2xl mx-auto">

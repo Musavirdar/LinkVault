@@ -85,7 +85,7 @@ export function DashboardPage() {
     ];
 
     return (
-        <div className="max-w-7xl mx-auto">
+        <div className="w-full max-w-[1100px] mx-auto space-y-6">
             {/* Header + Customize button */}
             <div className="flex items-start justify-between mb-1">
                 <DashboardHeader
@@ -96,12 +96,7 @@ export function DashboardPage() {
                 <motion.button
                     whileTap={{ scale: 0.94 }}
                     onClick={() => setCustomizeOpen(true)}
-                    className="flex items-center gap-2 mt-1 px-3 py-2 rounded-xl text-sm font-medium transition-all flex-shrink-0"
-                    style={{
-                        background: 'var(--bg-secondary)',
-                        border: '1px solid var(--border-strong)',
-                        color: 'var(--text-secondary)',
-                    }}
+                    className="flex items-center gap-2 mt-1 px-3.5 py-2 rounded-xl text-xs font-semibold bg-black/[0.04] dark:bg-white/10 hover:bg-black/[0.08] dark:hover:bg-white/15 border border-black/[0.06] dark:border-white/12 text-foreground transition-all duration-150 active:scale-[0.98] flex-shrink-0"
                 >
                     <Sliders className="w-4 h-4" />
                     <span className="hidden sm:inline">Customize</span>
@@ -133,10 +128,10 @@ export function DashboardPage() {
                                 initial={{ opacity: 0, y: -8 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, height: 0 }}
-                                className="rounded-lg p-5 bg-[var(--bg-secondary)] border border-[var(--border-subtle)]"
+                                className="rounded-2xl p-6 bg-card border border-black/[0.06] dark:border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]"
                             >
-                                <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-1">Quick Actions</h3>
-                                <p className="text-sm text-[var(--text-secondary)] mb-4">Common tasks you can do right now.</p>
+                                <h3 className="text-lg font-bold tracking-tight text-foreground mb-1">Quick Actions</h3>
+                                <p className="text-sm text-muted-foreground mb-4 leading-relaxed">Common tasks you can do right now.</p>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <ActionCard title="Manage Links" description="Add, edit, or organize your links" icon="links" onClick={() => navigate('/links')} />
                                     <ActionCard title="Upload Files" description="Upload and share files with others" icon="upload" onClick={() => navigate('/files')} />

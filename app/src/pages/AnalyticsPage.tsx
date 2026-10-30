@@ -55,7 +55,7 @@ export function AnalyticsPage() {
     const stats = useAnalyticsData();
 
     if (stats.error) return (
-        <div className="max-w-7xl mx-auto">
+        <div className="w-full max-w-[1100px] mx-auto space-y-6">
             <DashboardHeader title="Analytics" subtitle="Real-time performance of your links." />
             <div className="flex flex-col items-center justify-center py-24 gap-3">
                 <AlertCircle className="w-10 h-10 text-red-400 opacity-70" />
@@ -76,7 +76,7 @@ export function AnalyticsPage() {
     ];
 
     return (
-        <div className="max-w-7xl mx-auto">
+        <div className="w-full max-w-[1100px] mx-auto space-y-6">
             <DashboardHeader title="Analytics" subtitle="Real-time performance of your links." />
 
             {/* Stats row */}

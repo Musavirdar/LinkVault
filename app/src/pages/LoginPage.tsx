@@ -104,12 +104,12 @@ export function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen grid lg:grid-cols-2 overflow-hidden bg-[var(--bg-primary)]">
+        <div className="min-h-screen grid lg:grid-cols-2 overflow-hidden bg-background text-foreground">
 
             {/* ── LEFT SIDE: BRAND & GRAPHICS ── */}
             <div className="hidden lg:flex flex-col items-center justify-center relative overflow-hidden"
                 style={{
-                    background: 'radial-gradient(circle at center, color-mix(in srgb, var(--accent-primary) 15%, transparent), transparent 70%)',
+                    background: 'radial-gradient(circle at center, rgba(0, 113, 227, 0.12), transparent 70%)',
                     borderRight: '1px solid var(--border-subtle)'
                 }}>
 
@@ -118,7 +118,7 @@ export function LoginPage() {
                     animate={{ x: [0, 40, 0], y: [0, -30, 0], scale: [1, 1.1, 1] }}
                     transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }}
                     className="absolute -top-32 -left-32 w-[480px] h-[480px] rounded-full blur-[100px]"
-                    style={{ background: '#5865F230' }}
+                    style={{ background: '#0071E330' }}
                 />
                 <motion.div
                     animate={{ x: [0, -50, 0], y: [0, 40, 0], scale: [1, 1.15, 1] }}
@@ -220,7 +220,7 @@ export function LoginPage() {
                         animate={{ x: [0, 40, 0], y: [0, -30, 0], scale: [1, 1.1, 1] }}
                         transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }}
                         className="absolute -top-32 -left-32 w-[480px] h-[480px] rounded-full blur-3xl opacity-50"
-                        style={{ background: 'radial-gradient(circle, #5865F220, transparent 70%)' }}
+                        style={{ background: 'radial-gradient(circle, #0071E320, transparent 70%)' }}
                     />
                 </div>
 
@@ -235,13 +235,13 @@ export function LoginPage() {
                     {/* glass card */}
                     <div className="rounded-3xl overflow-hidden shadow-2xl"
                         style={{
-                            background: 'color-mix(in srgb, var(--bg-secondary) 85%, transparent)',
+                            background: 'rgba(255, 255, 255, 0.85)',
                             backdropFilter: 'blur(24px)',
-                            border: '1px solid color-mix(in srgb, var(--border-strong) 60%, transparent)',
+                            border: '1px solid rgba(0, 0, 0, 0.08)',
                         }}>
 
                         {/* gradient top bar */}
-                        <div className="h-1.5 w-full" style={{ background: 'linear-gradient(90deg, #5865F2, #8B5CF6, #EC4899)' }} />
+                        <div className="h-1.5 w-full" style={{ background: 'linear-gradient(90deg, #0071E3, #8B5CF6, #EC4899)' }} />
 
                         <div className="p-8 sm:p-10">
                             {/* Logo for mobile only */}
@@ -295,7 +295,7 @@ export function LoginPage() {
                                     >
                                         {mode === m && (
                                             <motion.div layoutId="tab-pill" className="absolute inset-0 rounded-lg shadow-sm"
-                                                style={{ background: 'linear-gradient(135deg, #5865F2, #7C3AED)' }} />
+                                                style={{ background: 'linear-gradient(135deg, #0071E3, #0077ED)' }} />
                                         )}
                                         <span className="relative z-10">{m === 'login' ? 'Sign In' : 'Sign Up'}</span>
                                     </motion.button>
@@ -319,9 +319,9 @@ export function LoginPage() {
                                                     onClick={() => setAccountKind(k)}
                                                     className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium border transition-all"
                                                     style={{
-                                                        background: accountKind === k ? '#5865F215' : 'transparent',
-                                                        border: `1px solid ${accountKind === k ? '#5865F2' : 'var(--border-strong)'}`,
-                                                        color: accountKind === k ? '#5865F2' : 'var(--text-secondary)',
+                                                        background: accountKind === k ? '#0071E315' : 'transparent',
+                                                        border: `1px solid ${accountKind === k ? '#0071E3' : 'var(--border-strong)'}`,
+                                                        color: accountKind === k ? '#0071E3' : 'var(--text-secondary)',
                                                     }}
                                                 >
                                                     <Icon className="w-4 h-4" />{label}
@@ -360,7 +360,7 @@ export function LoginPage() {
                                             className="w-full pl-9 pr-10 py-2.5 rounded-xl text-sm transition-all outline-none"
 
                                             style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-strong)', color: 'var(--text-primary)' }}
-                                            onFocusCapture={e => { e.currentTarget.style.borderColor = '#5865F2'; e.currentTarget.style.boxShadow = '0 0 0 3px #5865F220'; }}
+                                            onFocusCapture={e => { e.currentTarget.style.borderColor = '#0071E3'; e.currentTarget.style.boxShadow = '0 0 0 3px #0071E320'; }}
                                             onBlurCapture={e => { e.currentTarget.style.borderColor = ''; e.currentTarget.style.boxShadow = ''; }}
                                         />
                                         <button
@@ -429,8 +429,8 @@ export function LoginPage() {
                                     disabled={loading}
                                     className="w-full mt-2 py-3 rounded-xl font-semibold text-sm text-white flex items-center justify-center gap-2 transition-all shadow-lg"
                                     style={{
-                                        background: 'linear-gradient(135deg, #5865F2, #7C3AED)',
-                                        boxShadow: '0 4px 20px #5865F240',
+                                        background: 'linear-gradient(135deg, #0071E3, #0077ED)',
+                                        boxShadow: '0 4px 20px #0071E340',
                                         opacity: loading ? 0.7 : 1,
                                     }}
                                 >
@@ -491,7 +491,7 @@ function Field({ icon, label, name, type, value, onChange, placeholder, required
                     autoComplete={autoComplete ?? (type === 'email' ? 'email' : type === 'password' ? 'current-password' : 'off')}
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm transition-all outline-none"
                     style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-strong)', color: 'var(--text-primary)' }}
-                    onFocus={e => { e.currentTarget.style.borderColor = '#5865F2'; e.currentTarget.style.boxShadow = '0 0 0 3px #5865F220'; }}
+                    onFocus={e => { e.currentTarget.style.borderColor = '#0071E3'; e.currentTarget.style.boxShadow = '0 0 0 3px #0071E320'; }}
                     onBlur={e => { e.currentTarget.style.borderColor = ''; e.currentTarget.style.boxShadow = ''; }}
                 />
             </div>

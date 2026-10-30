@@ -22,11 +22,11 @@ export function ActionCard({ title, description, icon, onClick }: ActionCardProp
   return (
     <motion.button
       className={cn(
-        'w-full flex items-center gap-4 p-4 rounded-lg',
-        'bg-bg-secondary border border-border-subtle',
+        'w-full flex items-center gap-4 p-4 rounded-2xl',
+        'bg-black/[0.025] dark:bg-white/[0.04] border border-black/[0.04] dark:border-white/10',
         'text-left',
-        'hover:bg-bg-tertiary hover:border-border-strong',
-        'transition-all duration-200'
+        'hover:bg-black/[0.05] dark:hover:bg-white/[0.08] hover:border-[#0071E3]/30',
+        'transition-all duration-150 active:scale-[0.98]'
       )}
       variants={staggerItem}
       whileHover={{ y: -1 }}
@@ -35,9 +35,9 @@ export function ActionCard({ title, description, icon, onClick }: ActionCardProp
     >
       {/* Icon */}
       <div className={cn(
-        'w-12 h-12 rounded-lg flex-shrink-0',
+        'w-11 h-11 rounded-xl flex-shrink-0',
         'flex items-center justify-center',
-        'bg-bg-tertiary'
+        'bg-black/[0.04] dark:bg-white/10 text-foreground'
       )}>
         <Icon className="w-6 h-6 text-text-secondary" />
       </div>

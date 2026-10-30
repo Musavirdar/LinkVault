@@ -80,25 +80,23 @@ export function AuditPage() {
     };
 
     return (
-        <div className="max-w-5xl mx-auto py-6 px-4">
+        <div className="w-full max-w-[1100px] mx-auto py-4 space-y-6">
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold text-[var(--text-primary)]">Audit Log</h1>
-                    <p className="text-sm text-[var(--text-secondary)] mt-0.5">{total} events recorded</p>
+                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Audit Log</h1>
+                    <p className="text-sm text-muted-foreground mt-0.5">{total} events recorded</p>
                 </div>
 
                 <div className="flex items-center gap-3">
                     {/* Agent Activity Tab Filter */}
-                    <div className="flex items-center p-1 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-strong)]">
+                    <div className="flex items-center p-1 rounded-full bg-black/[0.05] dark:bg-white/10 border border-black/[0.04] dark:border-white/10 backdrop-blur-md">
                         <button
                             type="button"
                             onClick={() => setOnlyAgent(false)}
                             className={cn(
                                 'px-3 py-1.5 rounded-md text-xs font-medium transition-all',
-                                !onlyAgent
-                                    ? 'bg-[var(--accent-primary)] text-white shadow-sm'
-                                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                                !onlyAgent ? 'bg-[#0071E3] text-white shadow-sm rounded-full' : 'text-muted-foreground hover:text-foreground rounded-full'
                             )}
                         >
                             All Activity
@@ -108,9 +106,7 @@ export function AuditPage() {
                             onClick={() => setOnlyAgent(true)}
                             className={cn(
                                 'px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1.5',
-                                onlyAgent
-                                    ? 'bg-[var(--accent-primary)] text-white shadow-sm'
-                                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                                onlyAgent ? 'bg-[#0071E3] text-white shadow-sm rounded-full' : 'text-muted-foreground hover:text-foreground rounded-full'
                             )}
                         >
                             <Bot className="w-3.5 h-3.5" />
@@ -120,7 +116,7 @@ export function AuditPage() {
 
                     <button
                         onClick={() => setShowFilters(!showFilters)}
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-strong)] text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all"
+                        className="flex items-center gap-2 px-4 h-10 min-h-[40px] rounded-xl bg-card border border-black/[0.08] dark:border-white/12 text-sm font-medium text-foreground hover:bg-black/[0.04] dark:hover:bg-white/10 active:scale-[0.98] transition-all"
                     >
                         <Filter className="w-4 h-4" />
                         Filters
@@ -131,7 +127,7 @@ export function AuditPage() {
 
             {/* Filters */}
             {showFilters && (
-                <div className="rounded-xl p-4 bg-[var(--bg-secondary)] border border-[var(--border-strong)] mb-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="rounded-2xl p-5 bg-card border border-black/[0.08] dark:border-white/12 shadow-[0_4px_20px_rgba(0,0,0,0.04)] mb-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <select value={filters.actionType} onChange={e => setFilters(p => ({ ...p, actionType: e.target.value }))} className="input-field">
                         <option value="">All Actions</option>
                         {['Created', 'Updated', 'Deleted', 'Viewed', 'Uploaded', 'Login', 'Logout', 'Shared'].map(a => <option key={a} value={a}>{a}</option>)}

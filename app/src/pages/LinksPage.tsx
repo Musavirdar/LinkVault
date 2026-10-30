@@ -24,7 +24,7 @@ export function LinksPage() {
     const [showForm, setShowForm] = useState(false);
     const [editId, setEditId] = useState<string | null>(null);
     const [copied, setCopied] = useState<string | null>(null);
-    const [form, setForm] = useState({ title: '', url: '', description: '', color: '#5865F2', isFeatured: false });
+    const [form, setForm] = useState({ title: '', url: '', description: '', color: '#0071E3', isFeatured: false });
     const [saving, setSaving] = useState(false);
     const [formError, setFormError] = useState('');
 
@@ -58,7 +58,7 @@ export function LinksPage() {
         setSaving(false);
         setShowForm(false);
         setEditId(null);
-        setForm({ title: '', url: '', description: '', color: '#5865F2', isFeatured: false });
+        setForm({ title: '', url: '', description: '', color: '#0071E3', isFeatured: false });
         loadLinks();
     };
 
@@ -68,7 +68,7 @@ export function LinksPage() {
     };
 
     const handleEdit = (link: Link) => {
-        setForm({ title: link.title, url: link.url, description: link.description || '', color: link.color || '#5865F2', isFeatured: link.isFeatured });
+        setForm({ title: link.title, url: link.url, description: link.description || '', color: link.color || '#0071E3', isFeatured: link.isFeatured });
         setEditId(link.id);
         setShowForm(true);
     };
@@ -96,7 +96,7 @@ export function LinksPage() {
                 </div>
                 <motion.button
                     whileTap={{ scale: 0.96 }}
-                    onClick={() => { setShowForm(!showForm); setEditId(null); setForm({ title: '', url: '', description: '', color: '#5865F2', isFeatured: false }); }}
+                    onClick={() => { setShowForm(!showForm); setEditId(null); setForm({ title: '', url: '', description: '', color: '#0071E3', isFeatured: false }); }}
                     className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--accent-primary)] text-white text-sm font-medium hover:opacity-90 transition-all"
                 >
                     <Plus className="w-4 h-4" />
@@ -198,7 +198,7 @@ export function LinksPage() {
                     </ul>
                     <motion.button
                         whileTap={{ scale: 0.96 }}
-                        onClick={() => { setShowForm(true); setEditId(null); setForm({ title: '', url: '', description: '', color: '#5865F2', isFeatured: false }); }}
+                        onClick={() => { setShowForm(true); setEditId(null); setForm({ title: '', url: '', description: '', color: '#0071E3', isFeatured: false }); }}
                         className="flex items-center gap-2 px-6 py-3 rounded-xl text-white font-semibold text-sm transition-all hover:opacity-90"
                         style={{ background: 'linear-gradient(135deg,#5865F2,#7C3AED)', boxShadow: '0 4px 16px #5865F240' }}
                     >
@@ -223,7 +223,7 @@ export function LinksPage() {
                                 )}
                             >
                                 {/* Color swatch */}
-                                <div className="w-3 h-12 rounded-full flex-shrink-0" style={{ backgroundColor: link.color || '#5865F2' }} />
+                                <div className="w-3 h-12 rounded-full flex-shrink-0" style={{ backgroundColor: link.color || '#0071E3' }} />
 
                                 {/* Content */}
                                 <div className="flex-1 min-w-0">

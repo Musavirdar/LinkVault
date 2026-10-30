@@ -49,6 +49,7 @@ function SettingRow({
 }
 
 const accentOptions = [
+  { label: 'Cupertino Blue', value: '#0071E3' },
   { label: 'Indigo',  value: '#6366F1' },
   { label: 'Violet',  value: '#8B5CF6' },
   { label: 'Pink',    value: '#EC4899' },
@@ -165,7 +166,7 @@ export function SettingsPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <div className="w-full max-w-[1100px] mx-auto space-y-6">
       <DashboardHeader title="Settings" subtitle="Manage your account, security, and preferences." />
 
       <div className="flex gap-6">

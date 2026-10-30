@@ -99,14 +99,14 @@ export function FilesPage() {
     };
 
     return (
-        <div className="max-w-7xl mx-auto">
+        <div className="w-full max-w-[1100px] mx-auto space-y-6">
             <div className="flex items-start justify-between">
                 <DashboardHeader title="My Files" subtitle={`${resources.length} files across all directories.`} />
                 <motion.button
                     whileTap={{ scale: 0.94 }}
                     onClick={fetchFiles}
                     disabled={loading}
-                    className="mt-2 p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-colors"
+                    className="mt-2 p-2.5 rounded-xl bg-black/[0.04] dark:bg-white/10 text-muted-foreground hover:text-foreground hover:bg-black/[0.08] dark:hover:bg-white/15 border border-black/[0.04] dark:border-white/10 transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center"
                     title="Refresh"
                 >
                     <RefreshCw className={cn('w-4 h-4', loading && 'animate-spin')} />
@@ -118,8 +118,7 @@ export function FilesPage() {
             <motion.label
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="block rounded-xl border-2 border-dashed border-[var(--border-strong)] p-8 mb-6 flex flex-col items-center gap-3 cursor-pointer hover:border-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/5 transition-all"
-                style={{ background: 'var(--bg-secondary)' }}
+                className="block rounded-2xl border-2 border-dashed border-black/[0.1] dark:border-white/15 p-8 mb-6 flex flex-col items-center gap-3 cursor-pointer hover:border-[#0071E3] hover:bg-[#0071E3]/5 bg-card transition-all"
             >
                 <input type="file" multiple className="hidden" onChange={handleUpload} />
                 <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: 'var(--accent-primary)20' }}>
@@ -140,20 +139,17 @@ export function FilesPage() {
                         placeholder="Search files…"
                         value={search}
                         onChange={(e) => handleSearchChange(e.target.value)}
-                        className="w-full pl-9 pr-4 py-2 rounded-lg text-sm outline-none"
-                        style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)' }}
+                        className="w-full pl-10 pr-4 h-11 min-h-[44px] rounded-xl text-sm bg-card border border-black/[0.08] dark:border-white/12 text-foreground placeholder:text-muted-foreground outline-none focus:ring-4 focus:ring-[#0071E3]/15 focus:border-[#0071E3] transition-all"
                     />
                 </div>
-                <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium"
-                    style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)' }}>
+                <button className="flex items-center gap-2 px-4 h-11 min-h-[44px] rounded-xl text-sm font-medium bg-card border border-black/[0.08] dark:border-white/12 text-foreground hover:bg-black/[0.04] dark:hover:bg-white/10 transition-colors active:scale-[0.98]">
                     <Filter className="w-4 h-4" /> Filter
                 </button>
             </div>
 
             {/* File table */}
-            <div className="rounded-xl overflow-hidden" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)' }}>
-                <div className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-5 py-3 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]"
-                    style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+            <div className="rounded-2xl overflow-hidden bg-card border border-black/[0.06] dark:border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
+                <div className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-5 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground border-b border-black/[0.06] dark:border-white/10">
                     <span>Name</span><span>Directory</span><span>Size</span><span>Uploaded</span><span></span>
                 </div>
 
@@ -178,8 +174,7 @@ export function FilesPage() {
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: 8 }}
                             transition={{ delay: i * 0.03 }}
-                            className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-5 py-3.5 items-center group hover:bg-[var(--bg-tertiary)] transition-colors"
-                            style={{ borderBottom: '1px solid var(--border-subtle)' }}
+                            className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-5 py-3.5 items-center group hover:bg-black/[0.025] dark:hover:bg-white/[0.04] transition-colors border-b border-black/[0.04] dark:border-white/10"
                         >
                             <div className="flex items-center gap-3">
                                 {iconForType(file.type, file.fileType)}
