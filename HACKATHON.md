@@ -16,10 +16,10 @@
 
 | Model | Role in LinkVault Agent | Integration Point |
 |---|---|---|
-| **Meta Muse Spark Open** (`meta-models/muse-spark-open`) | **Core Planning & Autonomous Tool Calling**: Receives formal JSON tool schemas (`create_directory`, `move_resource`, `create_share_link`, `search`, `list_directory`, `delete_resource`) with `"tool_choice": "auto"` and live workspace context (real entity GUIDs). Emits structured `tool_calls`. An offline heuristic planner acts as a resilience fallback if the remote endpoint is unavailable. | `backend/Agent/Services/VaultAgentService.cs`<br>`backend/Agent/Services/MetaLlamaClient.cs` |
-| **Meta Muse Glimmer** (`meta-models/Muse-Glimmer-30B`) | **Fast Summaries & Diagnostic Parsing**: High-speed conversational responses, intent detection, and local verification. Distilled from Muse Spark for low-latency agent workflows. | `backend/Agent/Models/MetaLlamaConfig.cs`<br>`backend/Agent/Services/MetaLlamaClient.cs` |
+| **Meta Muse Spark Open** (`meta-models/muse-spark-open`) | **Core Planning & Autonomous Tool Calling**: Primary hackathon model on Baseten OpenAI-compatible endpoint (`https://inference.baseten.co/v1`). Receives formal JSON tool schemas (`create_directory`, `move_resource`, `create_share_link`, `search`, `list_directory`, `delete_resource`) with `"tool_choice": "auto"` and live workspace context (real entity GUIDs). Emits structured `tool_calls`. When tool calls return, `message.content` is null and `message.reasoning_content` is ignored. An offline heuristic planner acts as a resilience fallback if the remote endpoint is unavailable. | `backend/Agent/Services/VaultAgentService.cs`<br>`backend/Agent/Services/MetaLlamaClient.cs` |
+| **Meta Muse Spark Open** (`meta-models/muse-spark-open`) | **Multimodal Visual Asset Categorization**: Uses standard OpenAI `image_url` content parts with the unified Muse Spark Open model. *(Note: Verified via automated unit tests using a mock client; not claimed as production-verified without live hardware run).* | `backend/Agent/Services/MetaLlamaClient.cs`<br>`backend/Agent/Services/VaultAgentService.cs` |
+| **Meta Muse Glimmer** (`meta-models/Muse-Glimmer-30B`) | **Fast Summaries & Diagnostic Parsing**: High-speed conversational responses, intent detection, and local verification. Distilled from Muse Spark for low-latency agent workflows. | `backend/Agent/Models/MetaModelConfig.cs`<br>`backend/Agent/Services/MetaLlamaClient.cs` |
 | **Meta Llama Guard 3 (8B)** (`meta-llama/Llama-Guard-3-8B`) | **Safe Share Security Guardrail**: Scans file content prior to share link creation to detect exposed database connection strings, passwords, private keys, API tokens, and PII, blocking unconfirmed leaks. | `backend/Agent/Services/SafeShareGuard.cs`<br>`backend/Agent/Services/MetaLlamaClient.cs` |
-| **Meta Llama 3.2 Vision (11B)** (`meta-llama/Llama-3.2-11B-Vision-Instruct`) | **Multimodal Visual Asset Categorization**: Inspects uploaded screenshots, diagrams, and receipts, extracting visual semantics and filing assets into thematic workspace folders. | `backend/Agent/Services/MetaLlamaClient.cs`<br>`backend/Agent/Services/VaultAgentService.cs` |
 
 ---
 
@@ -47,7 +47,7 @@ Rather than basic Retrieval-Augmented Generation (RAG) that merely summarizes te
 - `backend/Agent/Services/IVaultAgentService.cs` & `VaultAgentService.cs`: Core tool-calling orchestrator, live workspace context assembler, atomic approval gating, and permission boundary validator.
 - `backend/Agent/Services/ISafeShareGuard.cs` & `SafeShareGuard.cs`: Pre-share secret detection engine combining regex and Llama Guard 3.
 - `backend/Agent/Models/AgentActionPlan.cs`, `PlanStep.cs`, `SafeShareScan.cs`: Database models for verifiable plan tracking.
-- `backend/Agent/Models/MetaLlamaConfig.cs` & `AgentDtos.cs`: Meta provider configuration and workspace context API contracts.
+- `backend/Agent/Models/MetaModelConfig.cs`, `MetaLlamaConfig.cs` & `AgentDtos.cs`: Meta provider configuration and workspace context API contracts.
 
 ### Frontend (`app/src/agent/` & `app/src/`)
 - `app/src/pages/LandingPage.tsx`: Interactive Apple HIG landing page mounted at `/` featuring live autonomous agent run preview (`#842`), traffic light controls, and approval diffs.
@@ -60,7 +60,7 @@ Rather than basic Retrieval-Augmented Generation (RAG) that merely summarizes te
 - `app/src/agent/components/AuditInsightsCard.tsx`: Verifiable agent audit trail telemetry card.
 
 ### Automated Tests (`backend/LinkVaultApi.Tests/`)
-- `backend/LinkVaultApi.Tests/Unit/MetaModelToolCallingTests.cs`: Verifies formal `tools` request payload generation, real-ID context injection into prompts, fallback ID resolution, and remote `tool_calls` response parsing (62 tests passing).
+- `backend/LinkVaultApi.Tests/Unit/MetaModelToolCallingTests.cs`: Verifies formal `tools` request payload generation, real-ID context injection into prompts, fallback ID resolution, and remote `tool_calls` response parsing, OpenAI image_url payload structure, and null content handling (64 tests passing).
 - `backend/LinkVaultApi.Tests/Unit/AgentHardeningTests.cs`: Concurrency & security hardening tests (atomic double approval 409, unauthorized approval denial, Viewer claim enforcement, missing resourceId rejection, and cross-tenant entity isolation).
 - `backend/LinkVaultApi.Tests/Unit/VaultAgentServiceTests.cs`: Live workspace context extraction, tool decomposition, and unauthenticated boundary enforcement.
 - `backend/LinkVaultApi.Tests/Unit/AgentApprovalAndAuditTests.cs`: Approval gating, plan rejection, and `via agent` audit attribution.
@@ -116,9 +116,10 @@ The primary hackathon project is the autonomous, verifiable workspace agent buil
 ### 2. Configure Environment Variables
 To connect LinkVault Agent to Meta's Baseten or Meta Model API endpoints:
 ```bash
-# Meta Muse Model Configuration
-export META_MODEL_BASE_URL="https://bridge.baseten.co/v1"
+# Meta Muse Model Configuration (Baseten OpenAI-Compatible Endpoint)
+export META_MODEL_BASE_URL="https://inference.baseten.co/v1"
 export META_MODEL_API_KEY="your-baseten-or-meta-api-key"
+export META_MODEL_NAME="meta-models/muse-spark-open"
 export MUSE_SPARK_MODEL="meta-models/muse-spark-open"
 export MUSE_GLIMMER_MODEL="meta-models/Muse-Glimmer-30B"
 

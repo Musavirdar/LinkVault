@@ -141,7 +141,8 @@ builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddSingleton<IStorageProvider, LocalStorageProvider>();
 builder.Services.AddSingleton<IFileValidationService, FileValidationService>();
 
-// Meta Llama & Workspace Agent Services
+// Meta Model & Workspace Agent Services
+builder.Services.Configure<MetaModelConfig>(builder.Configuration.GetSection(MetaModelConfig.SectionName));
 builder.Services.Configure<MetaLlamaConfig>(builder.Configuration.GetSection(MetaLlamaConfig.SectionName));
 builder.Services.AddHttpClient<IMetaLlamaClient, MetaLlamaClient>();
 builder.Services.AddScoped<ISafeShareGuard, SafeShareGuard>();

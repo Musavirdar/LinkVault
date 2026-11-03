@@ -536,6 +536,20 @@ public class VaultAgentService : IVaultAgentService
                         }
                     }
 
+                    // If target directory was not specified or was null at plan generation time,
+                    // check if this plan created a directory in a prior step:
+                    if (targetDirId == null)
+                    {
+                        var createdDirLog = await db.AuditLogs
+                            .Where(a => a.AgentPlanId == planId && a.EntityType == ResourceEntityType.Directory && a.ActionType == AuditActionType.Created)
+                            .OrderByDescending(a => a.CreatedAt)
+                            .FirstOrDefaultAsync();
+                        if (createdDirLog != null)
+                        {
+                            targetDirId = createdDirLog.EntityId;
+                        }
+                    }
+
                     resource.DirectoryId = targetDirId;
                     resource.UpdatedAt = DateTime.UtcNow;
 

@@ -9,12 +9,22 @@ namespace LinkVaultApi.Agent.Services;
 
 public class MetaLlamaClient : IMetaLlamaClient
 {
-    private readonly MetaLlamaConfig _config;
+    private readonly MetaModelConfig _config;
     private readonly HttpClient _httpClient;
     private readonly ILogger<MetaLlamaClient> _logger;
 
     public MetaLlamaClient(
         IOptions<MetaLlamaConfig> config,
+        HttpClient httpClient,
+        ILogger<MetaLlamaClient> logger)
+    {
+        _config = config.Value;
+        _httpClient = httpClient;
+        _logger = logger;
+    }
+
+    public MetaLlamaClient(
+        IOptions<MetaModelConfig> config,
         HttpClient httpClient,
         ILogger<MetaLlamaClient> logger)
     {
@@ -41,20 +51,34 @@ public class MetaLlamaClient : IMetaLlamaClient
         if (!string.IsNullOrWhiteSpace(envUrl))
             return envUrl;
 
-        return string.IsNullOrWhiteSpace(_config.BaseUrl) ? "https://bridge.baseten.co/v1" : _config.BaseUrl;
+        return string.IsNullOrWhiteSpace(_config.BaseUrl) ? "https://inference.baseten.co/v1" : _config.BaseUrl;
     }
 
-    private string ResolveLlama33Model()
+    private string ResolveModelName()
     {
-        var envModel = Environment.GetEnvironmentVariable("MUSE_SPARK_MODEL")
-            ?? Environment.GetEnvironmentVariable("META_MODEL_NAME");
+        var envModel = Environment.GetEnvironmentVariable("META_MODEL_NAME")
+            ?? Environment.GetEnvironmentVariable("MUSE_SPARK_MODEL");
         if (!string.IsNullOrWhiteSpace(envModel))
             return envModel;
 
-        if (!string.IsNullOrWhiteSpace(_config.MuseSparkModel))
-            return _config.MuseSparkModel;
+        if (!string.IsNullOrWhiteSpace(_config.ModelName))
+            return _config.ModelName;
 
-        return string.IsNullOrWhiteSpace(_config.Llama33Model) ? "meta-models/muse-spark-open" : _config.Llama33Model;
+        return string.IsNullOrWhiteSpace(_config.MuseSparkModel) ? "meta-models/muse-spark-open" : _config.MuseSparkModel;
+    }
+
+    private string ResolveLlama33Model() => ResolveModelName();
+
+    private string ResolveVisionModel()
+    {
+        var envModel = Environment.GetEnvironmentVariable("META_VISION_MODEL");
+        if (!string.IsNullOrWhiteSpace(envModel))
+            return envModel;
+
+        if (!string.IsNullOrWhiteSpace(_config.VisionModel))
+            return _config.VisionModel;
+
+        return ResolveModelName();
     }
 
     private string ResolveLlama31Model()
@@ -275,7 +299,7 @@ public class MetaLlamaClient : IMetaLlamaClient
     {
         var apiKey = ResolveApiKey();
         var baseUrl = ResolveBaseUrl();
-        var modelName = ResolveLlama33Model();
+        var modelName = ResolveModelName();
 
         if (string.IsNullOrWhiteSpace(apiKey))
         {
@@ -339,12 +363,26 @@ CRITICAL ID RULES:
                 foreach (var call in calls)
                 {
                     var fnName = call?["function"]?["name"]?.ToString() ?? "unknown";
-                    var fnArgs = call?["function"]?["arguments"]?.ToString() ?? "{}";
+                    string fnArgs = "{}";
+                    var argsNode = call?["function"]?["arguments"];
+                    if (argsNode is JsonValue val && val.TryGetValue<string>(out var strVal))
+                    {
+                        fnArgs = strVal;
+                    }
+                    else if (argsNode != null)
+                    {
+                        fnArgs = argsNode.ToString();
+                    }
                     toolCallsList.Add(new LlamaToolCall(fnName, fnArgs));
                 }
             }
 
-            var summary = choice?["content"]?.ToString() ?? $"Synthesized plan containing {toolCallsList.Count} step(s).";
+            // When tool calls are returned, message.content is null.
+            // Read ONLY message.content and tool_calls; ignore message.reasoning_content completely (never show or log it).
+            var rawContent = choice?["content"]?.ToString();
+            var summary = !string.IsNullOrWhiteSpace(rawContent)
+                ? rawContent
+                : $"Synthesized plan containing {toolCallsList.Count} step(s).";
             if (toolCallsList.Count == 0)
             {
                 _logger.LogWarning("Remote Meta model returned 0 tool calls. Falling back to local heuristic plan generation.");
@@ -416,7 +454,8 @@ Snippet:
                 ["temperature"] = 0.0
             };
 
-            using var request = new HttpRequestMessage(HttpMethod.Post, $"{_config.BaseUrl.TrimEnd('/')}/chat/completions");
+            var baseUrl = ResolveBaseUrl();
+            using var request = new HttpRequestMessage(HttpMethod.Post, $"{baseUrl.TrimEnd('/')}/chat/completions");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
             request.Content = new StringContent(requestBody.ToJsonString(), Encoding.UTF8, "application/json");
 
@@ -458,6 +497,8 @@ Snippet:
     public async Task<LlamaVisionResult> ClassifyImageWithVisionAsync(byte[] imageBytes, string mimeType, CancellationToken cancellationToken = default)
     {
         var apiKey = ResolveApiKey();
+        var baseUrl = ResolveBaseUrl();
+        var visionModel = ResolveVisionModel();
 
         if (string.IsNullOrWhiteSpace(apiKey))
         {
@@ -471,7 +512,7 @@ Snippet:
 
             var requestBody = new JsonObject
             {
-                ["model"] = _config.LlamaVisionModel,
+                ["model"] = visionModel,
                 ["messages"] = new JsonArray
                 {
                     new JsonObject
@@ -490,7 +531,7 @@ Snippet:
                 }
             };
 
-            using var request = new HttpRequestMessage(HttpMethod.Post, $"{_config.BaseUrl.TrimEnd('/')}/chat/completions");
+            using var request = new HttpRequestMessage(HttpMethod.Post, $"{baseUrl.TrimEnd('/')}/chat/completions");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
             request.Content = new StringContent(requestBody.ToJsonString(), Encoding.UTF8, "application/json");
 
