@@ -77,7 +77,41 @@ public class VaultAgentService : IVaultAgentService
             throw new UnauthorizedAccessException("User or organization identity could not be resolved from token.");
         }
 
-        var planResult = await _llamaClient.GenerateToolPlanAsync(request.UserGoal, null, cancellationToken);
+        // Fetch live workspace context: existing directories and active resources
+        var directories = await _dbContext.Directories
+            .Where(d => d.OrganizationId == orgId.Value)
+            .Select(d => new WorkspaceDirectoryContext
+            {
+                Id = d.Id,
+                Name = d.Name,
+                ParentDirectoryId = d.ParentDirectoryId
+            })
+            .Take(100)
+            .ToListAsync(cancellationToken);
+
+        var resources = await _dbContext.Resources
+            .Where(r => r.OrganizationId == orgId.Value && !r.IsDeleted)
+            .OrderByDescending(r => r.CreatedAt)
+            .Select(r => new WorkspaceResourceContext
+            {
+                Id = r.Id,
+                Name = r.Name,
+                DirectoryId = r.DirectoryId,
+                Type = r.Type.ToString(),
+                SizeInBytes = r.SizeInBytes
+            })
+            .Take(100)
+            .ToListAsync(cancellationToken);
+
+        var workspaceContext = new WorkspaceContextDto
+        {
+            OrganizationId = orgId.Value,
+            UserId = userId.Value,
+            Directories = directories,
+            Resources = resources
+        };
+
+        var planResult = await _llamaClient.GenerateToolPlanAsync(request.UserGoal, workspaceContext, cancellationToken);
 
         // Enforce maximum 10-step cap
         var toolCalls = planResult.ToolCalls.Take(10).ToList();

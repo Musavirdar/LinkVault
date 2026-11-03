@@ -46,11 +46,28 @@ public class MetaLlamaClient : IMetaLlamaClient
 
     private string ResolveLlama33Model()
     {
-        var envModel = Environment.GetEnvironmentVariable("META_MODEL_NAME");
+        var envModel = Environment.GetEnvironmentVariable("MUSE_SPARK_MODEL")
+            ?? Environment.GetEnvironmentVariable("META_MODEL_NAME");
         if (!string.IsNullOrWhiteSpace(envModel))
             return envModel;
 
-        return string.IsNullOrWhiteSpace(_config.Llama33Model) ? "meta-llama/Llama-3.3-70B-Instruct" : _config.Llama33Model;
+        if (!string.IsNullOrWhiteSpace(_config.MuseSparkModel))
+            return _config.MuseSparkModel;
+
+        return string.IsNullOrWhiteSpace(_config.Llama33Model) ? "meta-models/muse-spark-open" : _config.Llama33Model;
+    }
+
+    private string ResolveLlama31Model()
+    {
+        var envModel = Environment.GetEnvironmentVariable("MUSE_GLIMMER_MODEL")
+            ?? Environment.GetEnvironmentVariable("META_GLIMMER_MODEL");
+        if (!string.IsNullOrWhiteSpace(envModel))
+            return envModel;
+
+        if (!string.IsNullOrWhiteSpace(_config.MuseGlimmerModel))
+            return _config.MuseGlimmerModel;
+
+        return string.IsNullOrWhiteSpace(_config.Llama31Model) ? "meta-models/Muse-Glimmer-30B" : _config.Llama31Model;
     }
 
     public static JsonArray GetWorkspaceToolsDefinition()
@@ -270,9 +287,21 @@ public class MetaLlamaClient : IMetaLlamaClient
 
         try
         {
-            var systemPrompt = @"You are the LinkVault Verifiable Workspace Agent.
+            var systemPromptBuilder = new StringBuilder(@"You are the LinkVault Verifiable Workspace Agent powered by Meta Muse.
 Decompose the user's workspace request into a sequence of tool calls (maximum 10 steps).
-Use the provided tools to construct precise, sequential actions. Every move, share, or folder creation must be an individual tool call.";
+Use the provided tools to construct precise, sequential actions. Every move, share, or folder creation must be an individual tool call.
+CRITICAL ID RULES:
+1. When calling tools that require 'resourceId' (such as 'move_resource', 'create_share_link', 'delete_resource'), you MUST use the exact real GUID of the target resource from the Workspace Context below.
+2. When calling tools that require 'targetDirectoryId' or 'parentDirectoryId', you MUST use the exact real GUID of the directory from the Workspace Context below (or null if target is the workspace root).
+3. Do NOT invent, guess, or hallucinate IDs. Only use the real GUIDs listed in the Workspace Context.");
+
+            if (context != null)
+            {
+                systemPromptBuilder.AppendLine("\n\n### Current Workspace Context (Real Entities & IDs):");
+                systemPromptBuilder.AppendLine(JsonSerializer.Serialize(context, new JsonSerializerOptions { WriteIndented = true }));
+            }
+
+            var systemPrompt = systemPromptBuilder.ToString();
 
             var requestBody = new JsonObject
             {
@@ -500,21 +529,84 @@ Snippet:
         var lower = userGoal.ToLowerInvariant();
         var toolCalls = new List<LlamaToolCall>();
 
-        // Scenario 1 & 2: Invoices / Uploads Organization
-        if (lower.Contains("invoice") || lower.Contains("organize"))
+        // Extract real directories and resources from context if available
+        List<WorkspaceDirectoryContext>? dirs = null;
+        List<WorkspaceResourceContext>? resources = null;
+        if (context is WorkspaceContextDto ws)
         {
-            var targetFolder = lower.Contains("invoice") ? "Invoices" : (lower.Contains("finance") ? "Finance" : "Organized");
-            
-            toolCalls.Add(new LlamaToolCall("create_directory", 
-                JsonSerializer.Serialize(new { name = targetFolder }),
-                $"Create '{targetFolder}' directory"));
+            dirs = ws.Directories;
+            resources = ws.Resources;
+        }
+        else if (context != null)
+        {
+            try
+            {
+                var json = JsonSerializer.Serialize(context);
+                var doc = JsonSerializer.Deserialize<WorkspaceContextDto>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                dirs = doc?.Directories;
+                resources = doc?.Resources;
+            }
+            catch { }
+        }
 
-            toolCalls.Add(new LlamaToolCall("search",
-                JsonSerializer.Serialize(new { query = targetFolder }),
-                $"Search for '{targetFolder}' resources to organize"));
+        // Scenario 1 & 2: Invoices / Uploads Organization & Moving
+        if (lower.Contains("invoice") || lower.Contains("organize") || lower.Contains("move") || lower.Contains("share"))
+        {
+            var targetFolder = lower.Contains("invoice") ? "Invoices" 
+                : (lower.Contains("finance") ? "Finance" 
+                : (lower.Contains("deck") || lower.Contains("presentation") ? "Decks" : "Organized"));
+            
+            // Check if directory already exists in context
+            var existingDir = dirs?.FirstOrDefault(d => d.Name.Equals(targetFolder, StringComparison.OrdinalIgnoreCase));
+            string? targetDirId = existingDir?.Id.ToString();
+
+            if (existingDir == null)
+            {
+                toolCalls.Add(new LlamaToolCall("create_directory", 
+                    JsonSerializer.Serialize(new { name = targetFolder }),
+                    $"Create '{targetFolder}' directory"));
+            }
+
+            // Find matching resource by filename, extension, or fallback to first resource
+            var matchingResource = resources?.FirstOrDefault(r => 
+                lower.Contains(r.Name.ToLowerInvariant()) || 
+                (lower.Contains("invoice") && r.Name.Contains("invoice", StringComparison.OrdinalIgnoreCase)) ||
+                (lower.Contains("deck") && (r.Name.Contains("deck", StringComparison.OrdinalIgnoreCase) || r.Name.Contains("presentation", StringComparison.OrdinalIgnoreCase))));
+
+            if (matchingResource == null && resources != null && resources.Count > 0)
+            {
+                matchingResource = resources[0];
+            }
+
+            if (matchingResource != null && (lower.Contains("move") || lower.Contains("organize")))
+            {
+                toolCalls.Add(new LlamaToolCall("move_resource",
+                    JsonSerializer.Serialize(new { 
+                        resourceId = matchingResource.Id.ToString(), 
+                        targetDirectoryId = targetDirId 
+                    }),
+                    $"Move '{matchingResource.Name}' to '{targetFolder}' directory"));
+            }
+
+            if (matchingResource != null && lower.Contains("share"))
+            {
+                toolCalls.Add(new LlamaToolCall("create_share_link",
+                    JsonSerializer.Serialize(new { 
+                        resourceId = matchingResource.Id.ToString(), 
+                        expiryDays = 7 
+                    }),
+                    $"Create 7-day secure share link for '{matchingResource.Name}'"));
+            }
+
+            if (toolCalls.Count == 0)
+            {
+                toolCalls.Add(new LlamaToolCall("search",
+                    JsonSerializer.Serialize(new { query = targetFolder }),
+                    $"Search for '{targetFolder}' resources to organize"));
+            }
 
             return new LlamaPlanResult(
-                $"Identified organization intent. Propose creating directory '{targetFolder}' and searching matching files.",
+                $"Identified organization intent for workspace. Emitted plan with real verified resource references.",
                 toolCalls);
         }
 

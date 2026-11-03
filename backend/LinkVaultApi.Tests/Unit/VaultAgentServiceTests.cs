@@ -193,5 +193,48 @@ public class VaultAgentServiceTests
         updated!.Status.Should().Be(PlanStatus.Executing);
         updated.ApprovedAt.Should().NotBeNull();
     }
-}
 
+    [Fact]
+    public async Task GeneratePlanAsync_PassesLiveWorkspaceContextWithExistingDirectoriesAndResources()
+    {
+        // Arrange
+        var user = CreateUserPrincipal(_userId, _orgId);
+        var dir = new LinkVaultApi.Models.Directory
+        {
+            Id = Guid.NewGuid(),
+            Name = "Existing Reports",
+            OrganizationId = _orgId,
+            CreatedById = _userId
+        };
+        var res = new LinkVaultApi.Models.Resource
+        {
+            Id = Guid.NewGuid(),
+            Name = "Q3_Earnings.pdf",
+            OrganizationId = _orgId,
+            CreatedById = _userId,
+            Type = LinkVaultApi.Models.ResourceType.File,
+            SizeInBytes = 2048
+        };
+
+        _dbContext.Directories.Add(dir);
+        _dbContext.Resources.Add(res);
+        await _dbContext.SaveChangesAsync();
+
+        WorkspaceContextDto? capturedContext = null;
+        _mockLlamaClient
+            .Setup(c => c.GenerateToolPlanAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object?, CancellationToken>((goal, ctx, ct) => capturedContext = ctx as WorkspaceContextDto)
+            .ReturnsAsync(new LlamaPlanResult("Plan", new List<LlamaToolCall> { new("list_directory", "{}") }));
+
+        var request = new CreatePlanRequest { UserGoal = "Organize my workspace" };
+
+        // Act
+        await _service.GeneratePlanAsync(request, user);
+
+        // Assert
+        capturedContext.Should().NotBeNull();
+        capturedContext!.OrganizationId.Should().Be(_orgId);
+        capturedContext.Directories.Should().Contain(d => d.Id == dir.Id && d.Name == "Existing Reports");
+        capturedContext.Resources.Should().Contain(r => r.Id == res.Id && r.Name == "Q3_Earnings.pdf");
+    }
+}

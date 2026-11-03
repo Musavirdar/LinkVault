@@ -66,3 +66,27 @@ public class SafeShareScanResponse
     public string Message { get; set; } = string.Empty;
     public DateTime ScannedAt { get; set; } = DateTime.UtcNow;
 }
+
+public class WorkspaceDirectoryContext
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public Guid? ParentDirectoryId { get; set; }
+}
+
+public class WorkspaceResourceContext
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public Guid? DirectoryId { get; set; }
+    public string Type { get; set; } = string.Empty;
+    public long? SizeInBytes { get; set; }
+}
+
+public class WorkspaceContextDto
+{
+    public Guid OrganizationId { get; set; }
+    public Guid UserId { get; set; }
+    public List<WorkspaceDirectoryContext> Directories { get; set; } = new();
+    public List<WorkspaceResourceContext> Resources { get; set; } = new();
+}

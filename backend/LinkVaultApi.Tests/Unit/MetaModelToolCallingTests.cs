@@ -183,4 +183,61 @@ public class MetaModelToolCallingTests
         result.ToolCalls.Should().NotBeEmpty();
         result.ToolCalls.Should().Contain(t => t.ToolName == "create_directory");
     }
+
+    [Fact]
+    public async Task GenerateToolPlanAsync_WithWorkspaceContext_InjectsRealIdsIntoLocalFallbackPlan()
+    {
+        // Arrange
+        var mockHandler = new Mock<HttpMessageHandler>();
+        var httpClient = new HttpClient(mockHandler.Object);
+        var config = Options.Create(new MetaLlamaConfig
+        {
+            ApiKey = "", // Forces local planner fallback
+            MuseSparkModel = "meta-models/muse-spark-open"
+        });
+        var client = new MetaLlamaClient(config, httpClient, _mockLogger.Object);
+
+        var realResourceId = Guid.NewGuid();
+        var realDirId = Guid.NewGuid();
+        var context = new WorkspaceContextDto
+        {
+            OrganizationId = Guid.NewGuid(),
+            UserId = Guid.NewGuid(),
+            Directories = new List<WorkspaceDirectoryContext>
+            {
+                new() { Id = realDirId, Name = "Invoices" }
+            },
+            Resources = new List<WorkspaceResourceContext>
+            {
+                new() { Id = realResourceId, Name = "invoice_2026_Q3.pdf", Type = "File" }
+            }
+        };
+
+        // Act
+        var result = await client.GenerateToolPlanAsync("Move invoice to Invoices and share it", context);
+
+        // Assert
+        result.Should().NotBeNull();
+        var moveCall = result.ToolCalls.FirstOrDefault(t => t.ToolName == "move_resource");
+        moveCall.Should().NotBeNull();
+        moveCall!.ArgumentsJson.Should().Contain(realResourceId.ToString());
+        moveCall.ArgumentsJson.Should().Contain(realDirId.ToString());
+
+        var shareCall = result.ToolCalls.FirstOrDefault(t => t.ToolName == "create_share_link");
+        shareCall.Should().NotBeNull();
+        shareCall!.ArgumentsJson.Should().Contain(realResourceId.ToString());
+    }
+
+    [Fact]
+    public void MetaLlamaConfig_DefaultsToMuseSparkAndGlimmerModels()
+    {
+        // Arrange & Act
+        var config = new MetaLlamaConfig();
+
+        // Assert
+        config.MuseSparkModel.Should().Be("meta-models/muse-spark-open");
+        config.MuseGlimmerModel.Should().Be("meta-models/Muse-Glimmer-30B");
+        config.Llama33Model.Should().Be("meta-models/muse-spark-open");
+        config.Llama31Model.Should().Be("meta-models/Muse-Glimmer-30B");
+    }
 }
