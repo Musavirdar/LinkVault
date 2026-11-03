@@ -50,6 +50,11 @@ public class LoginRequestDto
     public string Password { get; set; } = string.Empty;
 }
 
+public class DemoLoginRequestDto
+{
+    public string? Role { get; set; } = "Admin";
+}
+
 public class LoginResponseDto
 {
     public Guid UserId { get; set; }

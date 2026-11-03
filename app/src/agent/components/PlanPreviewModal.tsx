@@ -71,6 +71,11 @@ export const PlanPreviewModal: React.FC<PlanPreviewModalProps> = ({
             <p className="text-sm font-medium text-foreground">
               "{plan.userGoal}"
             </p>
+            {plan.modelName && (
+              <span className="text-[11px] font-mono text-muted-foreground block">
+                Model: {plan.modelName}
+              </span>
+            )}
             {plan.summary && (
               <p className="text-xs text-muted-foreground pt-1.5 border-t border-black/[0.04] dark:border-white/10">
                 {plan.summary}

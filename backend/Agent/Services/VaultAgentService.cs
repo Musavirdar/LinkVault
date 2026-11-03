@@ -54,7 +54,8 @@ public class VaultAgentService : IVaultAgentService
     private static (Guid? userId, Guid? orgId, string? role) ExtractUserIdentity(ClaimsPrincipal user)
     {
         var userIdStr = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var orgIdStr = user.FindFirst("org_id")?.Value
+        var orgIdStr = user.FindFirst("orgId")?.Value
+            ?? user.FindFirst("org_id")?.Value
             ?? user.FindFirst("organization_id")?.Value
             ?? user.FindFirst("OrganizationId")?.Value;
         var role = user.FindFirst(ClaimTypes.Role)?.Value ?? user.FindFirst("role")?.Value;

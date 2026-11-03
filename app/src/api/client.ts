@@ -97,6 +97,24 @@ export const authApi = {
       requiresAuth: false,
     }),
 
+  demoLogin: (role: 'Admin' | 'Member' = 'Admin') =>
+    apiClient<{
+      userId: string;
+      email: string;
+      username: string;
+      displayName?: string;
+      avatarUrl?: string;
+      token: string;
+      refreshToken: string;
+      expiresAt: string;
+      accountType: string;
+      role?: string;
+    }>('/auth/demo-login', {
+      method: 'POST',
+      body: { role },
+      requiresAuth: false,
+    }),
+
   verify2FA: (preAuthToken: string, code: string) =>
     apiClient<{
       userId: string;

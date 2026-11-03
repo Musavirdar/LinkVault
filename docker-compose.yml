@@ -44,6 +44,7 @@ services:
       META_MODEL_NAME: ${META_MODEL_NAME:-meta-models/muse-spark-open-1026}
       META_GUARD_MODEL_NAME: ${META_GUARD_MODEL_NAME:-}
       META_VISION_MODEL_NAME: ${META_VISION_MODEL_NAME:-}
+      DEMO_MODE: ${DEMO_MODE:-false}
     ports:
       - "5000:80"
     depends_on:

@@ -15,9 +15,12 @@ public class AuthController : ControllerBase
     private readonly IAuthService _authService;
     private readonly ILogger<AuthController> _logger;
 
-    public AuthController(IAuthService authService, ILogger<AuthController> logger)
+    private readonly IDemoSeedService _demoSeedService;
+
+    public AuthController(IAuthService authService, IDemoSeedService demoSeedService, ILogger<AuthController> logger)
     {
         _authService = authService;
+        _demoSeedService = demoSeedService;
         _logger = logger;
     }
 
@@ -52,6 +55,29 @@ public class AuthController : ControllerBase
             return Unauthorized(new { error = ex.Message });
         }
     }
+    [HttpPost("demo-login")]
+    [EnableRateLimiting("auth")]
+    [SkipAudit]
+    public async Task<ActionResult<LoginResponseDto>> DemoLogin([FromBody] DemoLoginRequestDto? request)
+    {
+        if (!_demoSeedService.IsDemoModeEnabled())
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { error = "Demo mode is disabled on this environment. Set DEMO_MODE=true to enable." });
+        }
+
+        try
+        {
+            var role = string.Equals(request?.Role, "Member", StringComparison.OrdinalIgnoreCase) ? "Member" : "Admin";
+            var response = await _demoSeedService.LoginDemoUserAsync(role);
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to authenticate demo user");
+            return StatusCode(StatusCodes.Status500InternalServerError, new { error = "Failed to authenticate demo user." });
+        }
+    }
+
 
     [HttpPost("2fa/verify")]
     [EnableRateLimiting("auth")]

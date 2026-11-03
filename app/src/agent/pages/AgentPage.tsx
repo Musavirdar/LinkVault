@@ -111,7 +111,7 @@ export const AgentPage: React.FC = () => {
         setIsPlanModalOpen(true);
       }
     } catch (err: any) {
-      setErrorMessage(err.message || 'Failed to synthesize plan with Meta Llama.');
+      setErrorMessage(err.message || 'Failed to synthesize plan with Meta model.');
     } finally {
       setIsLoading(false);
     }
@@ -194,7 +194,7 @@ export const AgentPage: React.FC = () => {
 
         <div className="flex items-center gap-2">
           <span className="px-3 py-1 text-xs font-semibold rounded-full bg-[#0071E3]/10 text-[#0071E3] dark:text-[#0A84FF] border border-[#0071E3]/20">
-            Powered by Meta Llama 3.3
+            Model: {currentPlan?.modelName || "meta-models/muse-spark-open-1026"}
           </span>
           <span className="px-3 py-1 text-xs font-semibold rounded-full bg-[#34C759]/10 text-[#34C759] border border-[#34C759]/20 flex items-center gap-1.5">
             <Shield className="w-3.5 h-3.5" />

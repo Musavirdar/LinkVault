@@ -40,6 +40,7 @@ export interface AgentActionPlanDto {
   userGoal: string;
   status: PlanStatus;
   summary?: string;
+  modelName?: string;
   createdAt: string;
   approvedAt?: string;
   completedAt?: string;

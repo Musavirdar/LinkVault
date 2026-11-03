@@ -5,7 +5,7 @@ import {
     Lock, Mail, User, Eye, EyeOff, Building2,
     Loader2, CheckCircle2, XCircle, Github,
     Users, UserCircle, Linkedin, Folder,
-    FolderKanban, Share2, Sparkles, FolderLock
+    FolderKanban, Share2, Sparkles, FolderLock, Shield
 } from 'lucide-react';
 import { authApi, API_BASE_URL, parseJwtPermissions } from '@/api/client';
 import { useStore } from '@/store/useStore';
@@ -52,6 +52,24 @@ export function LoginPage() {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setForm(p => ({ ...p, [e.target.name]: e.target.value }));
         setError('');
+    };
+
+    const handleDemoLogin = async (role: 'Admin' | 'Member' = 'Admin') => {
+        setError('');
+        setLoading(true);
+        try {
+            const res = await authApi.demoLogin(role);
+            if (res.error) throw new Error(res.error);
+            if (res.data?.token) {
+                setToken(res.data.token);
+                setPermissions(parseJwtPermissions(res.data.token));
+                navigate('/agent');
+            }
+        } catch (err: unknown) {
+            setError((err as Error).message || 'Demo login failed. Make sure DEMO_MODE=true is configured.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -257,6 +275,44 @@ export function LoginPage() {
                                 <p className="text-sm text-[var(--text-muted)]">
                                     {mode === 'login' ? 'Enter your details to sign in.' : 'Get started with your free workspace.'}
                                 </p>
+                            </div>
+
+                            {/* One-Click Hackathon Evaluator Access */}
+                            <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 border border-blue-500/20 shadow-sm">
+                                <div className="flex items-center justify-between mb-2.5">
+                                    <span className="text-xs font-semibold text-[var(--text-primary)] flex items-center gap-1.5">
+                                        <Sparkles className="w-3.5 h-3.5 text-[#0071E3]" />
+                                        Hackathon Evaluator Quick Access
+                                    </span>
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#0071E3]/20 text-[#0071E3]">
+                                        DEMO MODE
+                                    </span>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2.5">
+                                    <motion.button
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
+                                        type="button"
+                                        disabled={loading}
+                                        onClick={() => handleDemoLogin('Admin')}
+                                        className="py-2.5 px-3 rounded-xl text-xs font-semibold text-white flex items-center justify-center gap-1.5 shadow-sm transition-all"
+                                        style={{ background: 'linear-gradient(135deg, #0071E3, #0077ED)' }}
+                                    >
+                                        <Shield className="w-3.5 h-3.5" />
+                                        Try Demo (Admin)
+                                    </motion.button>
+                                    <motion.button
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
+                                        type="button"
+                                        disabled={loading}
+                                        onClick={() => handleDemoLogin('Member')}
+                                        className="py-2.5 px-3 rounded-xl text-xs font-semibold text-[var(--text-primary)] bg-[var(--bg-tertiary)] border border-[var(--border-strong)] flex items-center justify-center gap-1.5 hover:bg-[var(--bg-secondary)] transition-all"
+                                    >
+                                        <User className="w-3.5 h-3.5" />
+                                        Try Demo (Member)
+                                    </motion.button>
+                                </div>
                             </div>
 
                             {/* SSO Buttons */}

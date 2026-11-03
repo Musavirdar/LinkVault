@@ -132,6 +132,7 @@ builder.Services.AddCors(options =>
 
 // Services
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IDemoSeedService, DemoSeedService>();
 builder.Services.AddScoped<IResourceService, ResourceService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<IChatService, ChatService>();
@@ -233,6 +234,12 @@ using (var scope = app.Services.CreateScope())
     else
     {
         dbContext.Database.EnsureCreated();
+    }
+
+    var demoSeed = scope.ServiceProvider.GetRequiredService<IDemoSeedService>();
+    if (demoSeed.IsDemoModeEnabled())
+    {
+        demoSeed.EnsureDemoWorkspaceSeededAsync().GetAwaiter().GetResult();
     }
 }
 

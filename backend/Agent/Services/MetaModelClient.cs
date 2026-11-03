@@ -557,6 +557,13 @@ Text snippet:
             throw new ArgumentException("Image size exceeds maximum 4 MB limit for vision analysis.");
         }
 
+        string[] allowedMimeTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+        var normalizedMime = mimeType?.ToLowerInvariant() ?? "";
+        if (!allowedMimeTypes.Contains(normalizedMime))
+        {
+            throw new ArgumentException($"MIME type '{mimeType}' is not supported for vision analysis. Allowed types: {string.Join(", ", allowedMimeTypes)}.");
+        }
+
         try
         {
             var base64Data = Convert.ToBase64String(imageBytes);
