@@ -207,7 +207,7 @@ export const AgentPage: React.FC = () => {
 
         <div className="flex items-center gap-2">
           <span data-testid="agent-model-badge" className="px-3 py-1 text-xs font-semibold rounded-full bg-[#0071E3]/10 text-[#0071E3] dark:text-[#0A84FF] border border-[#0071E3]/20">
-            Model: {currentPlan?.modelName || "meta-models/muse-spark-open-1026"}
+            Model: {currentPlan?.modelName || "meta-models/muse-spark-open"}
           </span>
           <span className="px-3 py-1 text-xs font-semibold rounded-full bg-[#34C759]/10 text-[#34C759] border border-[#34C759]/20 flex items-center gap-1.5">
             <Shield className="w-3.5 h-3.5" />

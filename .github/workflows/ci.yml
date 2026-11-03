@@ -106,7 +106,7 @@ jobs:
           JwtSettings__Audience: "LinkVaultClient"
           META_MODEL_BASE_URL: "http://localhost:5055/v1"
           META_MODEL_API_KEY: "test"
-          META_MODEL_NAME: "meta-models/muse-spark-open-1026"
+          META_MODEL_NAME: "meta-models/muse-spark-open"
           ASPNETCORE_URLS: "http://localhost:5246"
         run: |
           dotnet run --project backend/LinkVaultApi.csproj --no-launch-profile &

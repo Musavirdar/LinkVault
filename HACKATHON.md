@@ -1,6 +1,6 @@
 # LinkVault Agent — Meta Hackathon Submission
 
-> **Headline**: A verifiable AI workspace agent built with **Meta Muse Spark Open** (`meta-models/muse-spark-open-1026`) via Baseten's OpenAI-compatible endpoint (`https://inference.baseten.co/v1`) that acts on your files, directories, and share links under your exact permissions with live workspace context injection, multi-round planning loop, human-in-the-loop approval, real-time SignalR progress, zero-trust audit attribution, and an Apple HIG frontend.
+> **Headline**: A verifiable AI workspace agent built with **Meta Muse Spark Open** (`meta-models/muse-spark-open`) via Baseten's OpenAI-compatible endpoint (`https://inference.baseten.co/v1`) that acts on your files, directories, and share links under your exact permissions with live workspace context injection, multi-round planning loop, human-in-the-loop approval, real-time SignalR progress, zero-trust audit attribution, and an Apple HIG frontend.
 
 ---
 
@@ -12,11 +12,13 @@
 
 ---
 
-## 🧠 Meta Model Used & Verified Architecture
+## 🧠 Meta Model Used & Architecture
+
+> **Model name note:** The participant guide mentions a `meta-models/muse-spark-open-1026` variant. On my Baseten account that name returned "please check the model you provided" (Nov 3), while `meta-models/muse-spark-open` appeared in the account's model list and passed a plain chat test and a tool-calling test (direct curl). The project therefore defaults to `meta-models/muse-spark-open` and reads `META_MODEL_NAME` so another variant can be used without code changes.
 
 | Component | Detail | Integration Point |
 |---|---|---|
-| **Model** | **Meta Muse Spark Open** (`meta-models/muse-spark-open-1026`) | Configured via `META_MODEL_NAME` (default `meta-models/muse-spark-open-1026`) in `backend/Agent/Models/MetaModelConfig.cs` |
+| **Model** | **Meta Muse Spark Open** (`meta-models/muse-spark-open`) | Configured via `META_MODEL_NAME` (default `meta-models/muse-spark-open`) in `backend/Agent/Models/MetaModelConfig.cs` |
 | **Provider API** | **Baseten OpenAI-compatible Chat Completions** (`https://inference.baseten.co/v1/chat/completions`) | `backend/Agent/Services/MetaModelClient.cs` |
 | **Authentication** | `Authorization: Bearer <META_MODEL_API_KEY>` (set exclusively via environment variables) | `backend/Agent/Services/MetaModelClient.cs` |
 | **Tool Calling Format** | Standard OpenAI-compatible `tools` array with `tool_choice: "auto"`. Arguments parsed robustly from JSON strings. `message.content` is null during tool calls; `message.reasoning_content` is strictly suppressed and ignored. | `backend/Agent/Services/MetaModelClient.cs` |
@@ -58,7 +60,7 @@ Rather than basic Retrieval-Augmented Generation (RAG) that merely summarizes te
 ### Frontend (`app/src/agent/` & `app/src/`)
 - `app/src/pages/LandingPage.tsx`: Interactive Apple HIG landing page mounted at `/` featuring live autonomous agent run preview (`#842`), traffic light controls, and approval diffs.
 - `app/src/pages/LoginPage.tsx`: Authentication page featuring one-click **"Try Demo (Admin)"** and **"Try Demo (Member)"** evaluator access.
-- `app/src/agent/pages/AgentPage.tsx`: Full AI Workspace & Security Agent page with dynamic Meta model badge (`meta-models/muse-spark-open-1026`) and real-time SignalR execution stream.
+- `app/src/agent/pages/AgentPage.tsx`: Full AI Workspace & Security Agent page with dynamic Meta model badge (`meta-models/muse-spark-open`) and real-time SignalR execution stream.
 - `app/src/agent/components/VaultAgentChat.tsx`: Conversational prompt card with suggested prompt chips and native browser voice dictation.
 - `app/src/agent/components/PlanPreviewModal.tsx`: Step-by-step preview modal displaying model name with one-click Approve / Reject buttons.
 - `app/src/agent/components/LiveProgressStream.tsx`: SignalR real-time execution visualizer.
@@ -129,7 +131,7 @@ To connect LinkVault Agent to Meta's Baseten or Meta Model API endpoints:
 # Meta Model Configuration (Baseten OpenAI-Compatible Endpoint)
 export META_MODEL_BASE_URL="https://inference.baseten.co/v1"
 export META_MODEL_API_KEY="your-baseten-or-meta-api-key"
-export META_MODEL_NAME="meta-models/muse-spark-open-1026"
+export META_MODEL_NAME="meta-models/muse-spark-open"
 
 # Optional Specialized Models
 export META_GUARD_MODEL_NAME=""
@@ -163,7 +165,7 @@ npm run dev
 4. Try speaking via the microphone button (or submit via chat):
    - *"Organize my uploads into an Invoices folder and share the latest invoice for 7 days."*
 5. Inspect the generated plan preview:
-   - Notice the exact model badge (`meta-models/muse-spark-open-1026`).
+   - Notice the exact model badge (`meta-models/muse-spark-open`).
    - Notice the real file and directory names and GUIDs referenced in the steps.
 6. Click **Approve Plan**:
    - Watch the SignalR live progress stream update each step in real time (Pending ➔ Running ➔ Completed).

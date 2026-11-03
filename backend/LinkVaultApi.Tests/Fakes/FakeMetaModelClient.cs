@@ -6,7 +6,7 @@ namespace LinkVaultApi.Tests.Fakes;
 
 public class FakeMetaModelClient : IMetaModelClient
 {
-    public string ModelName { get; set; } = "meta-models/muse-spark-open-1026";
+    public string ModelName { get; set; } = "meta-models/muse-spark-open";
     public string BaseUrl { get; set; } = "https://inference.baseten.co/v1";
     public bool HasApiKey { get; set; } = true;
     public bool HasVisionConfigured { get; set; } = true;
