@@ -42,3 +42,104 @@ jobs:
           cd app
           npm ci
           npm run build
+
+  e2e-test:
+    name: Playwright End-to-End Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgrespassword
+          POSTGRES_DB: linkvault_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+
+      - name: Install Frontend Dependencies & Playwright
+        working-directory: ./app
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Build Frontend Application
+        working-directory: ./app
+        run: npm run build
+
+      - name: Start Fake Model Server
+        working-directory: ./app
+        run: |
+          npx tsx e2e/fake-model.ts &
+          for i in {1..30}; do
+            if curl -s http://localhost:5055/health; then
+              echo "Fake model server is healthy and ready."
+              break
+            fi
+            sleep 1
+          done
+
+      - name: Start Backend API (Demo Mode)
+        env:
+          ASPNETCORE_ENVIRONMENT: Development
+          DEMO_MODE: "true"
+          ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=linkvault_test;Username=postgres;Password=postgrespassword"
+          JwtSettings__Secret: "SuperSecretKeyForLinkVaultDemoTestingPurposesOnly2026!"
+          JwtSettings__Issuer: "LinkVaultApi"
+          JwtSettings__Audience: "LinkVaultClient"
+          META_MODEL_BASE_URL: "http://localhost:5055/v1"
+          META_MODEL_API_KEY: "test"
+          META_MODEL_NAME: "meta-models/muse-spark-open-1026"
+          ASPNETCORE_URLS: "http://localhost:5246"
+        run: |
+          dotnet run --project backend/LinkVaultApi.csproj --no-launch-profile &
+          for i in {1..30}; do
+            if curl -s http://localhost:5246/health; then
+              echo "Backend API is healthy and ready."
+              break
+            fi
+            sleep 1
+          done
+
+      - name: Start Vite Preview Server
+        working-directory: ./app
+        run: |
+          npx vite preview --port 5173 &
+          for i in {1..30}; do
+            if curl -s http://localhost:5173; then
+              echo "Vite preview server is ready."
+              break
+            fi
+            sleep 1
+          done
+
+      - name: Run Playwright E2E Tests
+        working-directory: ./app
+        env:
+          E2E_BASE_URL: "http://localhost:5173"
+        run: npm run test:e2e
+
+      - name: Upload Playwright Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: app/playwright-report/
+          retention-days: 14

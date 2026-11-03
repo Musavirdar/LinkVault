@@ -181,7 +181,7 @@ export function AuditPage() {
                                         </span>
                                         {log.entityName && <span className="font-medium text-sm text-[var(--text-primary)] truncate">{log.entityName}</span>}
                                         {isViaAgent && (
-                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                                            <span data-testid="via-agent-badge" className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">
                                                 <Bot className="w-3 h-3" /> via agent
                                             </span>
                                         )}

@@ -38,7 +38,7 @@ export const PlanPreviewModal: React.FC<PlanPreviewModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="bg-white/95 dark:bg-[#1C1C1E]/95 backdrop-blur-2xl border border-black/[0.08] dark:border-white/12 w-full max-w-2xl rounded-3xl shadow-[0_24px_60px_rgba(0,0,0,0.22)] overflow-hidden flex flex-col max-h-[90vh]">
+      <div data-testid="plan-preview-modal" className="bg-white/95 dark:bg-[#1C1C1E]/95 backdrop-blur-2xl border border-black/[0.08] dark:border-white/12 w-full max-w-2xl rounded-3xl shadow-[0_24px_60px_rgba(0,0,0,0.22)] overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="p-6 border-b border-black/[0.06] dark:border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -137,7 +137,7 @@ export const PlanPreviewModal: React.FC<PlanPreviewModalProps> = ({
         <div className="p-4 sm:p-5 bg-black/[0.02] dark:bg-white/[0.02] border-t border-black/[0.06] dark:border-white/10 flex items-center justify-between gap-3">
           <button
             type="button"
-            onClick={onReject}
+            data-testid="reject-plan-btn" onClick={onReject}
             disabled={isSubmitting}
             className="min-h-[44px] px-4 py-2 text-sm font-semibold rounded-xl border border-red-500/30 text-[#FF3B30] hover:bg-red-500/10 active:scale-[0.98] transition-all flex items-center gap-2"
           >
@@ -155,7 +155,7 @@ export const PlanPreviewModal: React.FC<PlanPreviewModalProps> = ({
             </button>
             <button
               type="button"
-              onClick={onApprove}
+              data-testid="approve-plan-btn" onClick={onApprove}
               disabled={isSubmitting}
               className="min-h-[44px] px-5 py-2.5 text-sm font-semibold rounded-xl bg-[#34C759] hover:bg-[#30D158] active:bg-[#28B04C] text-white shadow-sm shadow-green-500/20 active:scale-[0.98] transition-all flex items-center gap-2"
             >

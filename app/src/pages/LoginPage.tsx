@@ -63,7 +63,7 @@ export function LoginPage() {
             if (res.data?.token) {
                 setToken(res.data.token);
                 setPermissions(parseJwtPermissions(res.data.token));
-                navigate('/agent');
+                navigate('/dashboard');
             }
         } catch (err: unknown) {
             setError((err as Error).message || 'Demo login failed. Make sure DEMO_MODE=true is configured.');
@@ -294,7 +294,7 @@ export function LoginPage() {
                                         whileTap={{ scale: 0.98 }}
                                         type="button"
                                         disabled={loading}
-                                        onClick={() => handleDemoLogin('Admin')}
+                                        data-testid="demo-admin-btn" onClick={() => handleDemoLogin('Admin')}
                                         className="py-2.5 px-3 rounded-xl text-xs font-semibold text-white flex items-center justify-center gap-1.5 shadow-sm transition-all"
                                         style={{ background: 'linear-gradient(135deg, #0071E3, #0077ED)' }}
                                     >
@@ -306,7 +306,7 @@ export function LoginPage() {
                                         whileTap={{ scale: 0.98 }}
                                         type="button"
                                         disabled={loading}
-                                        onClick={() => handleDemoLogin('Member')}
+                                        data-testid="demo-member-btn" onClick={() => handleDemoLogin('Member')}
                                         className="py-2.5 px-3 rounded-xl text-xs font-semibold text-[var(--text-primary)] bg-[var(--bg-tertiary)] border border-[var(--border-strong)] flex items-center justify-center gap-1.5 hover:bg-[var(--bg-secondary)] transition-all"
                                     >
                                         <User className="w-3.5 h-3.5" />

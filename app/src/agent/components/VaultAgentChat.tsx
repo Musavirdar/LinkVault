@@ -81,6 +81,7 @@ export const VaultAgentChat: React.FC<VaultAgentChatProps> = ({
       <form onSubmit={handleSubmit} className="space-y-3">
         <div className="relative rounded-2xl border border-black/[0.08] dark:border-white/12 bg-black/[0.02] dark:bg-white/[0.04] focus-within:border-[#0071E3] focus-within:ring-4 focus-within:ring-[#0071E3]/15 transition-all duration-150">
           <textarea
+            data-testid="agent-prompt-input"
             value={goal}
             onChange={(e) => setGoal(e.target.value)}
             onKeyDown={(e) => {
@@ -107,6 +108,7 @@ export const VaultAgentChat: React.FC<VaultAgentChatProps> = ({
             </div>
 
             <button
+              data-testid="agent-submit-btn"
               type="submit"
               disabled={isLoading || !goal.trim()}
               className="min-h-[44px] px-5 py-2.5 rounded-xl bg-[#0071E3] hover:bg-[#0077ED] active:bg-[#0066CC] disabled:opacity-40 text-white text-sm font-semibold flex items-center gap-2 transition-all shadow-sm shadow-[#0071E3]/25 active:scale-[0.98]"

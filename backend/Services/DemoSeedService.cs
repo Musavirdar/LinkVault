@@ -100,7 +100,7 @@ public class DemoSeedService : IDemoSeedService
                 CanUpdate = true,
                 CanDelete = false,
                 CanExport = true,
-                CanShare = true,
+                CanShare = false,
                 CanManageUsers = false,
                 CanManageRoles = false,
                 CanViewAuditLogs = false,

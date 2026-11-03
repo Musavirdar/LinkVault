@@ -172,7 +172,7 @@ export function DirectoriesPage() {
                                                 : <Folder className="w-6 h-6" style={{ color: dir.color || '#0071E3' }} />
                                             }
                                             <div>
-                                                <div className="font-semibold text-[var(--text-primary)]">{dir.name}</div>
+                                                <div data-testid="directory-name" className="font-semibold text-[var(--text-primary)]">{dir.name}</div>
                                                 {dir.description && <div className="text-xs text-[var(--text-muted)] mt-0.5 line-clamp-1">{dir.description}</div>}
                                             </div>
                                         </div>

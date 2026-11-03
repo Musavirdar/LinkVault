@@ -19,7 +19,7 @@ export const SafeShareAlertModal: React.FC<SafeShareAlertModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="bg-white/95 dark:bg-[#1C1C1E]/95 backdrop-blur-2xl border border-black/[0.08] dark:border-white/12 w-full max-w-lg rounded-3xl shadow-[0_24px_60px_rgba(0,0,0,0.22)] overflow-hidden">
+      <div data-testid="safe-share-alert-modal" className="bg-white/95 dark:bg-[#1C1C1E]/95 backdrop-blur-2xl border border-black/[0.08] dark:border-white/12 w-full max-w-lg rounded-3xl shadow-[0_24px_60px_rgba(0,0,0,0.22)] overflow-hidden">
         <div className={`p-5 flex items-center justify-between border-b ${
           isBlocked ? 'bg-red-500/10 border-red-500/20' : 'bg-amber-500/10 border-amber-500/20'
         }`}>

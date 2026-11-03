@@ -72,6 +72,19 @@ export const AgentPage: React.FC = () => {
               )
             );
             setPlanStatus('Failed');
+            if (e.errorMessage && e.errorMessage.toLowerCase().includes('safe share guard')) {
+              setSafeShareScan({
+                resourceId: 'blocked',
+                fileName: 'Sensitive Resource',
+                status: 'Blocked',
+                riskScore: 98,
+                detectedThreats: ['Exposed Database Credentials or API Secrets'],
+                canShare: false,
+                message: e.errorMessage,
+                scannedAt: new Date().toISOString(),
+              });
+              setIsSafeShareModalOpen(true);
+            }
           },
           onPlanFinished: (e) => {
             setPlanStatus(e.status);
@@ -193,7 +206,7 @@ export const AgentPage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="px-3 py-1 text-xs font-semibold rounded-full bg-[#0071E3]/10 text-[#0071E3] dark:text-[#0A84FF] border border-[#0071E3]/20">
+          <span data-testid="agent-model-badge" className="px-3 py-1 text-xs font-semibold rounded-full bg-[#0071E3]/10 text-[#0071E3] dark:text-[#0A84FF] border border-[#0071E3]/20">
             Model: {currentPlan?.modelName || "meta-models/muse-spark-open-1026"}
           </span>
           <span className="px-3 py-1 text-xs font-semibold rounded-full bg-[#34C759]/10 text-[#34C759] border border-[#34C759]/20 flex items-center gap-1.5">
@@ -205,7 +218,7 @@ export const AgentPage: React.FC = () => {
 
       {/* Error Banner */}
       {errorMessage && (
-        <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 flex items-start gap-3">
+        <div data-testid="agent-error-banner" className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 flex items-start gap-3">
           <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
           <div className="text-sm">
             <span className="font-semibold block">Agent Error</span>

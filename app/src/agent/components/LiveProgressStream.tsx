@@ -17,7 +17,7 @@ export const LiveProgressStream: React.FC<LiveProgressStreamProps> = ({
   const progressPercent = steps.length > 0 ? Math.round((completedCount / steps.length) * 100) : 0;
 
   return (
-    <div className="bg-card text-card-foreground rounded-2xl border border-black/[0.06] dark:border-white/10 p-6 space-y-5 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
+    <div data-testid="live-progress-stream" className="bg-card text-card-foreground rounded-2xl border border-black/[0.06] dark:border-white/10 p-6 space-y-5 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
       <div className="flex items-center justify-between">
         <div>
           <h3 className="font-bold tracking-tight text-foreground text-base flex items-center gap-2">
