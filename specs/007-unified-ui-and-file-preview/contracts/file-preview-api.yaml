@@ -1,0 +1,96 @@
+openapi: 3.0.3
+info:
+  title: LinkVault File Preview & Streaming API
+  version: 1.0.0
+  description: Endpoints for generating preview/download tickets and streaming file contents inline.
+paths:
+  /api/files/{id}/ticket:
+    post:
+      summary: Issue single-use stream/download ticket
+      description: Generates a short-lived (60s) secure token allowing inline preview or download.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Ticket generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ticket:
+                    type: string
+                    example: "dGhpcyBpcyBhIHJhbmRvbSB0b2tlbg"
+                  expiresAt:
+                    type: string
+                    format: date-time
+                  downloadUrl:
+                    type: string
+                    example: "/api/files/3fa85f64-5717-4562-b3fc-2c963f66afa6/download?ticket=dGhpcyBpcyBhIHJhbmRvbSB0b2tlbg"
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (cross-organization access)
+        '404':
+          description: Resource not found
+
+  /api/files/{id}/download:
+    get:
+      summary: Stream file content (inline or download)
+      description: Streams binary content. Supports ?ticket= query parameter OR Authorization Bearer header.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: ticket
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: File content stream
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+                example: 'inline; filename="photo.png"'
+            Content-Type:
+              schema:
+                type: string
+                example: "image/png"
+            X-Content-Type-Options:
+              schema:
+                type: string
+                example: "nosniff"
+            Content-Length:
+              schema:
+                type: integer
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '401':
+          description: Invalid or expired ticket / missing authentication
+        '404':
+          description: Resource or physical file not found
+        '410':
+          description: Ticket has expired
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+

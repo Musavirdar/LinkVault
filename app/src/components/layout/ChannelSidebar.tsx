@@ -1,3 +1,4 @@
+import { LinkVaultLogo } from '@/components/ui/LinkVaultLogo';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, PanelLeftClose, PanelLeftOpen, Search, X, Link2, File, Folder } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -222,11 +223,7 @@ export function ChannelSidebar() {
             exit={{ opacity: 0 }}
           >
             <div className="flex items-center gap-2">
-              <img
-                alt="LinkVault Logo"
-                className="h-5 w-auto object-contain"
-                src="https://lh3.googleusercontent.com/aida/AEtjO1UbcIUStZ-tEXrVwMgFcaav3KfhdgICONmzYt_ToqD3l-T0tPzgHcI9k8F76U7pDjTFWbaPw4_sD7IDBSW3HikuZEV4GwW-xfKkT9YPeo5PYWovV-VucNeTaG4rFr9V_0E5B_fuZimAh3bpdzprVPzhXd3fFRjwGvpcsaJU-c1umqXWTyXFuO0EQgYcOvx2cQxdDXUbcgETOUN6uyqBO_VE4G_XgDCL7PbbE0EIUFw"
-              />
+              <LinkVaultLogo size={22} />
               <span className="font-semibold text-[15px] tracking-tight text-text-primary">
                 {activeWorkspaceData?.name ?? 'LinkVault'}
               </span>

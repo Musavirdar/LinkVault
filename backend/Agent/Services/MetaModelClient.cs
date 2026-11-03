@@ -388,7 +388,7 @@ public class MetaModelClient : IMetaModelClient
 
         if (tools != null && tools.Count > 0)
         {
-            requestBody["tools"] = tools;
+            requestBody["tools"] = tools.DeepClone();
             if (!string.IsNullOrWhiteSpace(toolChoice))
             {
                 requestBody["tool_choice"] = toolChoice;

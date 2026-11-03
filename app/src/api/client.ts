@@ -1,3 +1,4 @@
+import { useStore } from '@/store/useStore';
 // In development: leave empty so Vite's proxy forwards /api/* to the backend (no CORS).
 // In production: set VITE_API_URL to your real backend URL (e.g. https://api.example.com).
 export const API_BASE_URL = import.meta.env.VITE_API_URL ?? '';
@@ -45,6 +46,15 @@ export async function apiClient<T>(
     const status = response.status;
 
     if (!response.ok) {
+      if (response.status === 401) {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        try {
+          useStore.getState().logout();
+        } catch {
+          // ignore
+        }
+      }
       const errorData = await response.json().catch(() => ({}));
       const message = errorData.error || errorData.message || errorData.title
         || (response.status === 401 ? 'Please sign in again.' :
@@ -278,6 +288,24 @@ export const directoriesApi = {
 
 // Resources API
 export const resourcesApi = {
+  getAll: (directoryId?: string) =>
+    apiClient<
+      Array<{
+        id: string;
+        name: string;
+        type: string;
+        fileType?: string;
+        url?: string;
+        sizeFormatted?: string;
+        viewCount: number;
+        clickCount: number;
+        isPublic: boolean;
+        createdAt: string;
+        directoryId?: string;
+        directoryName?: string;
+      }>
+    >('/resources' + (directoryId ? '?directoryId=' + directoryId : '')),
+
   getById: (id: string) =>
     apiClient<{
       id: string;
@@ -605,6 +633,38 @@ export const filesApi = {
     return `${API_BASE_URL}/api/files/${resourceId}/download`;
   },
 
+  getPreviewBlob: async (resourceId: string): Promise<{ blob: Blob; mimeType: string } | null> => {
+    const token = localStorage.getItem('accessToken');
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/files/${resourceId}/download`, { headers });
+      if (!res.ok) {
+        const ticketRes = await filesApi.createDownloadTicket(resourceId);
+        if (ticketRes.data?.downloadUrl) {
+          const ticketFetch = await fetch(`${API_BASE_URL}${ticketRes.data.downloadUrl}`);
+          if (ticketFetch.ok) {
+            const blob = await ticketFetch.blob();
+            const mimeType = ticketFetch.headers.get('Content-Type') || 'application/octet-stream';
+            return { blob, mimeType };
+          }
+        }
+        return null;
+      }
+      const blob = await res.blob();
+      const mimeType = res.headers.get('Content-Type') || 'application/octet-stream';
+      return { blob, mimeType };
+    } catch {
+      return null;
+    }
+  },
+
+  getPreviewText: async (resourceId: string): Promise<string | null> => {
+    const preview = await filesApi.getPreviewBlob(resourceId);
+    if (!preview) return null;
+    return await preview.blob.text();
+  },
+
   downloadWithTicket: async (resourceId: string, fileName?: string) => {
     const url = await filesApi.getDownloadUrl(resourceId);
     const a = document.createElement('a');
@@ -773,5 +833,27 @@ export function parseJwtPermissions(token: string): JwtPermissions {
       canViewAuditLogs: false,
       accountType: 'Individual',
     };
+  }
+}
+
+
+export function isJwtExpired(token: string): boolean {
+  try {
+    const payloadB64 = token.split('.')[1];
+    if (!payloadB64) return true;
+    const padded = payloadB64.replace(/-/g, '+').replace(/_/g, '/');
+    const json = decodeURIComponent(
+      atob(padded)
+        .split('')
+        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    const payload = JSON.parse(json);
+    if (payload.exp && payload.exp * 1000 < Date.now()) {
+      return true;
+    }
+    return false;
+  } catch {
+    return true;
   }
 }

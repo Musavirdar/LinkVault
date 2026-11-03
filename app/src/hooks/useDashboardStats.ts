@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { linksApi, directoriesApi } from '@/api/client';
+import { useEffect, useState, useCallback } from 'react';
+import { linksApi, resourcesApi } from '@/api/client';
 
 export interface DashboardStats {
     totalLinks: number;
@@ -9,15 +9,15 @@ export interface DashboardStats {
     totalClicks: number;
     loading: boolean;
     error: string | null;
+    refresh: () => void;
 }
 
 /**
- * Aggregates real stats from the Links and Directories APIs.
- * - totalLinks / activeLinks from linksApi.getAll()
- * - totalFiles / totalViews / totalClicks from directoriesApi.getAll()  (sum of resourceCount)
+ * Aggregates live stats from Links and Resources APIs.
+ * Includes both folder files and root/general files.
  */
 export function useDashboardStats(): DashboardStats {
-    const [stats, setStats] = useState<DashboardStats>({
+    const [stats, setStats] = useState<Omit<DashboardStats, 'refresh'>>({
         totalLinks: 0,
         activeLinks: 0,
         totalFiles: 0,
@@ -27,38 +27,31 @@ export function useDashboardStats(): DashboardStats {
         error: null,
     });
 
+    const [tick, setTick] = useState(0);
+    const refresh = useCallback(() => setTick((t) => t + 1), []);
+
     useEffect(() => {
         let cancelled = false;
 
         async function load() {
             try {
-                const [linksRes, dirsRes] = await Promise.all([
+                const [linksRes, resourcesRes] = await Promise.all([
                     linksApi.getAll(),
-                    directoriesApi.getAll(),
+                    resourcesApi.getAll(),
                 ]);
 
                 if (cancelled) return;
 
                 const links = linksRes.data ?? [];
-                const dirs = dirsRes.data ?? [];
+                const resources = resourcesRes.data ?? [];
 
                 const totalLinks = links.length;
                 const activeLinks = links.filter((l) => l.isActive).length;
-                const totalClicks = links.reduce((acc, l) => acc + (l.clickCount ?? 0), 0);
-                const totalFiles = dirs.reduce((acc, d) => acc + (d.resourceCount ?? 0), 0);
-
-                // Fetch resources per directory to sum real viewCounts
-                const resourceResults = await Promise.all(
-                    dirs.map((d) => directoriesApi.getResources(d.id))
-                );
-                if (cancelled) return;
-
-                let totalViews = 0;
-                for (const res of resourceResults) {
-                    for (const r of res.data ?? []) {
-                        totalViews += r.viewCount ?? 0;
-                    }
-                }
+                const totalFiles = resources.length;
+                const totalClicks =
+                    links.reduce((acc, l) => acc + (l.clickCount ?? 0), 0) +
+                    resources.reduce((acc, r) => acc + (r.clickCount ?? 0), 0);
+                const totalViews = resources.reduce((acc, r) => acc + (r.viewCount ?? 0), 0);
 
                 setStats({
                     totalLinks,
@@ -81,8 +74,10 @@ export function useDashboardStats(): DashboardStats {
         }
 
         load();
-        return () => { cancelled = true; };
-    }, []);
+        return () => {
+            cancelled = true;
+        };
+    }, [tick]);
 
-    return stats;
+    return { ...stats, refresh };
 }

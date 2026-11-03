@@ -1,0 +1,156 @@
+openapi: 3.0.3
+info:
+  title: LinkVault Verifiable Agent Chat API
+  version: 1.0.0
+  description: API specifications for conversational agent planning, verifiable step execution, and live SignalR event streaming.
+paths:
+  /api/agent/plan:
+    post:
+      summary: Synthesize action plan or answer conversational query
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userGoal
+              properties:
+                userGoal:
+                  type: string
+                  example: "hello"
+                preferredModel:
+                  type: string
+                  nullable: true
+      responses:
+        '200':
+          description: Plan synthesized successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentActionPlan'
+        '400':
+          description: User goal empty or invalid
+        '401':
+          description: Unauthorized
+        '503':
+          description: Model inference unavailable
+
+  /api/agent/plan/{planId}/approve:
+    post:
+      summary: Approve and execute state-changing plan steps
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Plan approved and background execution started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  planId:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    example: "Executing"
+                  message:
+                    type: string
+        '404':
+          description: Plan not found
+
+  /api/agent/plan/{planId}/reject:
+    post:
+      summary: Reject proposed plan steps
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Plan rejected
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  planId:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    example: "Rejected"
+                  message:
+                    type: string
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    AgentActionPlan:
+      type: object
+      properties:
+        planId:
+          type: string
+          format: uuid
+        userGoal:
+          type: string
+        status:
+          type: string
+          enum: [Draft, AwaitingApproval, Executing, Completed, Rejected, Failed]
+        summary:
+          type: string
+          description: Markdown explanation or conversational reply from the assistant
+        modelName:
+          type: string
+        requiresUserApproval:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanStep'
+
+    PlanStep:
+      type: object
+      properties:
+        stepNumber:
+          type: integer
+        toolName:
+          type: string
+        parameters:
+          type: object
+        requiresApproval:
+          type: boolean
+        description:
+          type: string
+        status:
+          type: string
+          enum: [Pending, Running, Completed, Failed, Skipped]
+        result:
+          nullable: true
+        errorMessage:
+          type: string
+          nullable: true
+

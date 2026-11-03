@@ -1,7 +1,7 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, X, CheckCircle, AlertCircle, FileText, Image, FileArchive, Loader2 } from 'lucide-react';
-import { fileUploadApi } from '@/api/client';
+import { Upload, X, CheckCircle, AlertCircle, FileText, Image, FileArchive, Loader2, Folder } from 'lucide-react';
+import { fileUploadApi, directoriesApi } from '@/api/client';
 import { cn } from '@/lib/utils';
 
 interface UploadedFile {
@@ -35,6 +35,16 @@ export function FileUploadZone({ directoryId, onUploaded }: Props) {
     const [uploaded, setUploaded] = useState<UploadedFile[]>([]);
     const [error, setError] = useState('');
     const [progress, setProgress] = useState(0);
+    const [directories, setDirectories] = useState<{ id: string; name: string }[]>([]);
+    const [chosenDirectoryId, setChosenDirectoryId] = useState<string>(directoryId || '');
+
+    useEffect(() => {
+        if (!directoryId) {
+            directoriesApi.getAll().then((res) => {
+                if (res.data) setDirectories(res.data.map((d) => ({ id: d.id, name: d.name })));
+            });
+        }
+    }, [directoryId]);
 
     const handleFiles = useCallback(async (files: FileList | null) => {
         if (!files || files.length === 0) return;
@@ -48,7 +58,8 @@ export function FileUploadZone({ directoryId, onUploaded }: Props) {
         // Simulate progress
         const interval = setInterval(() => setProgress(p => Math.min(p + 15, 85)), 200);
 
-        const res = await fileUploadApi.upload(file, directoryId);
+        const targetDir = directoryId || (chosenDirectoryId.trim() ? chosenDirectoryId : undefined);
+        const res = await fileUploadApi.upload(file, targetDir);
         clearInterval(interval);
         setProgress(100);
 
@@ -61,7 +72,7 @@ export function FileUploadZone({ directoryId, onUploaded }: Props) {
         }
 
         setTimeout(() => { setUploading(false); setProgress(0); }, 600);
-    }, [directoryId, onUploaded]);
+    }, [directoryId, chosenDirectoryId, onUploaded]);
 
     const onDrop = useCallback((e: React.DragEvent) => {
         e.preventDefault();
@@ -71,6 +82,28 @@ export function FileUploadZone({ directoryId, onUploaded }: Props) {
 
     return (
         <div className="rounded-2xl overflow-hidden bg-card border border-black/[0.06] dark:border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
+            {/* Optional Folder Selection */}
+            {directories.length > 0 && !directoryId && (
+                <div className="px-5 pt-3.5 pb-1 flex flex-wrap items-center justify-between gap-2 text-xs border-b border-black/[0.04] dark:border-white/05 bg-black/[0.01] dark:bg-white/[0.02]">
+                    <div className="flex items-center gap-1.5 text-muted-foreground font-medium">
+                        <Folder className="w-3.5 h-3.5 text-[#0071E3]" />
+                        <span>Upload into folder:</span>
+                    </div>
+                    <select
+                        value={chosenDirectoryId}
+                        onChange={(e) => setChosenDirectoryId(e.target.value)}
+                        className="px-2.5 py-1 rounded-lg bg-black/[0.04] dark:bg-white/10 border border-black/[0.06] dark:border-white/10 text-foreground text-xs font-medium outline-none focus:ring-2 focus:ring-[#0071E3]"
+                    >
+                        <option value="">Root / General (No folder)</option>
+                        {directories.map((d) => (
+                            <option key={d.id} value={d.id}>
+                                {d.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            )}
+
             {/* Drop Zone */}
             <motion.div
                 className={cn(
@@ -92,7 +125,11 @@ export function FileUploadZone({ directoryId, onUploaded }: Props) {
                     <p className="text-sm font-medium text-[var(--text-primary)]">
                         {dragging ? 'Drop to upload' : 'Drag & drop or click to upload'}
                     </p>
-                    <p className="text-xs text-[var(--text-muted)] mt-1">Max 10MB · Images, PDFs, Documents, Archives</p>
+                    <p className="text-xs text-[var(--text-muted)] mt-1">
+                        {chosenDirectoryId
+                            ? `Target: ${directories.find(d => d.id === chosenDirectoryId)?.name || 'Folder'}`
+                            : 'Max 10MB · Images, PDFs, Documents, Archives'}
+                    </p>
                 </div>
             </motion.div>
 
@@ -128,30 +165,24 @@ export function FileUploadZone({ directoryId, onUploaded }: Props) {
             {/* Uploaded Files */}
             <AnimatePresence>
                 {uploaded.length > 0 && (
-                    <div className="px-4 pb-4 space-y-2">
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="px-4 pb-4 space-y-2">
+                        <p className="text-xs font-medium text-[var(--text-secondary)]">Recently uploaded</p>
                         {uploaded.map(f => (
-                            <motion.div
-                                key={f.id}
-                                initial={{ opacity: 0, x: -10 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: 10 }}
-                                className="flex items-center gap-3 p-2.5 rounded-lg bg-[var(--bg-primary)]"
-                            >
-                                <div className="w-8 h-8 rounded flex items-center justify-center bg-green-500/20 text-green-400 flex-shrink-0">
-                                    {fileIcon(f.mimeType)}
+                            <div key={f.id} className="flex items-center justify-between p-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs">
+                                <div className="flex items-center gap-2 min-w-0">
+                                    <span className="text-[var(--accent-primary)]">{fileIcon(f.mimeType)}</span>
+                                    <span className="font-medium text-[var(--text-primary)] truncate max-w-[200px]">{f.name}</span>
+                                    <span className="text-[var(--text-muted)]">({formatBytes(f.size)})</span>
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-medium text-[var(--text-primary)] truncate">{f.name}</p>
-                                    <p className="text-xs text-[var(--text-muted)]">{formatBytes(f.size)}</p>
+                                <div className="flex items-center gap-2">
+                                    <CheckCircle className="w-3.5 h-3.5 text-green-400" />
+                                    <button onClick={() => setUploaded(prev => prev.filter(x => x.id !== f.id))} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">
+                                        <X className="w-3.5 h-3.5" />
+                                    </button>
                                 </div>
-                                <CheckCircle className="w-4 h-4 text-green-400 flex-shrink-0" />
-                                <button aria-label={`Remove ${f.name}`} onClick={() => setUploaded(prev => prev.filter(u => u.id !== f.id))} className="p-0.5 rounded hover:text-[var(--text-primary)] text-[var(--text-muted)]">
-                                    <X className="w-3.5 h-3.5" />
-                                </button>
-
-                            </motion.div>
+                            </div>
                         ))}
-                    </div>
+                    </motion.div>
                 )}
             </AnimatePresence>
         </div>

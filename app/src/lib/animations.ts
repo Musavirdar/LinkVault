@@ -19,6 +19,7 @@ export const appleMicroSpring = {
   damping: 30,
 };
 
+export const modalSpring = { type: "spring" as const, stiffness: 350, damping: 28 };
 import type { Variants } from 'framer-motion';
 
 // Easing functions as tuples

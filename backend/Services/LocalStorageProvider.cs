@@ -10,8 +10,10 @@ public class LocalStorageProvider : IStorageProvider
 
     public LocalStorageProvider(IConfiguration config, IWebHostEnvironment env, ILogger<LocalStorageProvider> logger)
     {
-        _basePath = config.GetValue<string>("FileStorage:UploadsPath")
-            ?? Path.Combine(env.ContentRootPath, "uploads");
+        var configuredPath = config.GetValue<string>("FileStorage:UploadsPath");
+        _basePath = !string.IsNullOrWhiteSpace(configuredPath)
+            ? configuredPath
+            : Path.Combine(env.ContentRootPath, "uploads");
         Directory.CreateDirectory(_basePath);
         _logger = logger;
     }

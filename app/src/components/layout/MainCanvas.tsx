@@ -16,7 +16,7 @@ export function MainCanvas({ children }: MainCanvasProps) {
       )}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.4, delay: 0.2 }}
+      transition={{ duration: 0.15, ease: 'easeOut' }}
     >
       <div className="flex-1 overflow-y-auto custom-scrollbar">
         <motion.div

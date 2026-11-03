@@ -122,6 +122,7 @@ export const useStore = create<AppState>()(
         theme: state.theme,
         sidebarCollapsed: state.sidebarCollapsed,
         activityPanelCollapsed: state.activityPanelCollapsed,
+        user: state.user,
       }),
     }
   )

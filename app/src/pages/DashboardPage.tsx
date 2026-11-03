@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sliders } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -12,45 +12,17 @@ import { FileUploadZone } from '@/components/dashboard/FileUpload';
 import { CustomizeDashboard } from '@/components/dashboard/CustomizeDashboard';
 import { useStore } from '@/store/useStore';
 import { usePreferencesStore } from '@/store/usePreferencesStore';
-import { useDashboardStats } from '@/hooks/useDashboardStats';
-import { directoriesApi } from '@/api/client';
-import { format } from 'date-fns';
+import { useDashboardData } from '@/hooks/useDashboardData';
 import { cn } from '@/lib/utils';
-import type { FileItem } from '@/types';
 
 export function DashboardPage() {
     const { user } = useStore();
     const { isVisible, compactMode } = usePreferencesStore();
     const navigate = useNavigate();
     const [customizeOpen, setCustomizeOpen] = useState(false);
-    const [files, setFiles] = useState<FileItem[]>([]);
-    const apiStats = useDashboardStats();
-
-    // Fetch real recent files from all directories
-    useEffect(() => {
-        directoriesApi.getAll().then(async (dirsRes) => {
-            const dirs = dirsRes.data ?? [];
-            const all: FileItem[] = [];
-            await Promise.all(dirs.map(async (dir) => {
-                const rRes = await directoriesApi.getResources(dir.id);
-                (rRes.data ?? []).forEach((r) => {
-                    const VALID = ['image', 'document', 'folder', 'video', 'audio'] as const;
-                    type FT = typeof VALID[number];
-                    const safeType: FT = VALID.includes(r.type as FT) ? (r.type as FT) : 'document';
-                    all.push({
-                        id: r.id,
-                        name: r.name,
-                        type: safeType,
-                        date: format(new Date(r.createdAt), "MMM d, yyyy 'at' h:mm a"),
-                        size: r.sizeFormatted ?? undefined,
-                    });
-                });
-            }));
-            // Sort newest first, take top 5
-            all.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-            setFiles(all.slice(0, 5));
-        });
-    }, []);
+    
+    // Unified, consolidated dashboard data with in-memory caching
+    const { stats: apiStats, recentFiles, isInitialLoading, refresh } = useDashboardData();
 
     const gap = compactMode ? 'gap-3' : 'gap-6';
     const mb = compactMode ? 'mb-3' : 'mb-6';
@@ -60,26 +32,26 @@ export function DashboardPage() {
         {
             label: 'Total Links',
             value: apiStats.totalLinks,
-            subtext: apiStats.loading ? 'Loading…' : `+${apiStats.activeLinks} active`,
+            subtext: isInitialLoading ? 'Loading…' : `+${apiStats.activeLinks} active`,
             change: apiStats.activeLinks > 0 ? apiStats.activeLinks : undefined,
             icon: 'links' as const,
         },
         {
             label: 'Total Files',
             value: apiStats.totalFiles,
-            subtext: apiStats.loading ? 'Loading…' : apiStats.totalFiles > 0 ? `${apiStats.totalFiles} items` : 'No files yet',
+            subtext: isInitialLoading ? 'Loading…' : apiStats.totalFiles > 0 ? `${apiStats.totalFiles} items` : 'No files yet',
             icon: 'files' as const,
         },
         {
             label: 'Total Clicks',
             value: apiStats.totalClicks,
-            subtext: apiStats.loading ? 'Loading…' : 'Across all links',
+            subtext: isInitialLoading ? 'Loading…' : 'Across all links',
             icon: 'clicks' as const,
         },
         {
             label: 'Total Views',
             value: apiStats.totalViews,
-            subtext: apiStats.loading ? 'Loading…' : 'Across all content',
+            subtext: isInitialLoading ? 'Loading…' : 'Across all content',
             icon: 'views' as const,
         },
     ];
@@ -108,12 +80,13 @@ export function DashboardPage() {
                 {isVisible('stats') && (
                     <motion.div
                         key="stats"
-                        initial={{ opacity: 0, y: -8 }}
+                        initial={{ opacity: 0, y: -4 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                        transition={{ duration: 0.15 }}
                         className={mb}
                     >
-                        <StatsGrid stats={stats} />
+                        <StatsGrid stats={stats} isLoading={isInitialLoading} />
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -125,9 +98,10 @@ export function DashboardPage() {
                         {isVisible('quickActions') && (
                             <motion.div
                                 key="quickActions"
-                                initial={{ opacity: 0, y: -8 }}
+                                initial={{ opacity: 0, y: -4 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, height: 0 }}
+                                transition={{ duration: 0.15 }}
                                 className="rounded-2xl p-6 bg-card border border-black/[0.06] dark:border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]"
                             >
                                 <h3 className="text-lg font-bold tracking-tight text-foreground mb-1">Quick Actions</h3>
@@ -143,8 +117,8 @@ export function DashboardPage() {
                     {/* Upload Zone */}
                     <AnimatePresence>
                         {isVisible('uploadZone') && (
-                            <motion.div key="uploadZone" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, height: 0 }}>
-                                <FileUploadZone />
+                            <motion.div key="uploadZone" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.15 }}>
+                                <FileUploadZone onUploaded={refresh} />
                             </motion.div>
                         )}
                     </AnimatePresence>
@@ -152,8 +126,8 @@ export function DashboardPage() {
                     {/* Recent Files */}
                     <AnimatePresence>
                         {isVisible('recentFiles') && (
-                            <motion.div key="recentFiles" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, height: 0 }}>
-                                <FileList files={files} />
+                            <motion.div key="recentFiles" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.15 }}>
+                                <FileList files={recentFiles} isLoading={isInitialLoading} />
                             </motion.div>
                         )}
                     </AnimatePresence>
@@ -162,7 +136,7 @@ export function DashboardPage() {
                 {/* Profile Card */}
                 <AnimatePresence>
                     {isVisible('profileCard') && (
-                        <motion.div key="profileCard" initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, height: 0 }}>
+                        <motion.div key="profileCard" initial={{ opacity: 0, x: 4 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.15 }}>
                             <ProfileCard />
                         </motion.div>
                     )}
@@ -172,7 +146,7 @@ export function DashboardPage() {
             {/* Heatmap */}
             <AnimatePresence>
                 {isVisible('heatmap') && (
-                    <motion.div key="heatmap" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, height: 0 }} className="mb-8">
+                    <motion.div key="heatmap" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.15 }} className="mb-8">
                         <AttendanceHeatmap />
                     </motion.div>
                 )}

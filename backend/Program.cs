@@ -15,6 +15,27 @@ using Microsoft.IdentityModel.Tokens;
 using System.IO.Compression;
 using System.Threading.RateLimiting;
 
+// Load local .env file if present (safe local secret management)
+var envFilePath = File.Exists(Path.Combine(Directory.GetCurrentDirectory(), ".env"))
+    ? Path.Combine(Directory.GetCurrentDirectory(), ".env")
+    : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ".env");
+
+if (File.Exists(envFilePath))
+{
+    foreach (var line in File.ReadAllLines(envFilePath))
+    {
+        var trimmed = line.Trim();
+        if (string.IsNullOrWhiteSpace(trimmed) || trimmed.StartsWith("#") || !trimmed.Contains('=')) continue;
+        var parts = trimmed.Split('=', 2);
+        var key = parts[0].Trim();
+        var val = parts[1].Trim().Trim('"', '\'');
+        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable(key)))
+        {
+            Environment.SetEnvironmentVariable(key, val);
+        }
+    }
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Validate environment secrets and configuration before bootstrapping services
@@ -55,7 +76,17 @@ builder.Services.AddSwaggerGen(c =>
 
 // Database Context
 builder.Services.AddDbContext<LinkVaultDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    var conn = builder.Configuration.GetConnectionString("DefaultConnection");
+    if (string.Equals(conn, "InMemory", StringComparison.OrdinalIgnoreCase) || string.IsNullOrWhiteSpace(conn))
+    {
+        options.UseInMemoryDatabase("LinkVaultDemoDb");
+    }
+    else
+    {
+        options.UseNpgsql(conn);
+    }
+});
 
 // JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");

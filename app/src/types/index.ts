@@ -58,6 +58,7 @@ export interface FileItem {
   date: string;
   size?: string;
   thumbnail?: string;
+  directoryName?: string;
 }
 
 export interface Activity {

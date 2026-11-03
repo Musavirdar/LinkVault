@@ -115,3 +115,17 @@ export interface AgentPlanFinishedEvent {
   totalSteps: number;
   summary?: string;
 }
+
+
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content?: string;
+  plan?: AgentActionPlanDto;
+  isThinking?: boolean;
+  isApproved?: boolean;
+  isRejected?: boolean;
+  isExecuting?: boolean;
+  timestamp: string;
+  errorMessage?: string;
+}

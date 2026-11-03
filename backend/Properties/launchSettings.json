@@ -15,7 +15,8 @@
       "launchBrowser": false,
       "applicationUrl": "http://localhost:5246",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "META_MODEL_API_KEY": ""
       }
     },
     "IIS Express": {
@@ -23,7 +24,8 @@
       "launchBrowser": true,
       "launchUrl": "swagger",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "META_MODEL_API_KEY": ""
       }
     }
   }

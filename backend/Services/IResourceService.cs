@@ -12,6 +12,7 @@ public interface IResourceService
     Task<bool> DeleteDirectoryAsync(Guid id, Guid userId);
 
     // Resources
+    Task<List<ResourceDto>> GetAllResourcesAsync(Guid organizationId, Guid? directoryId = null);
     Task<List<ResourceDto>> GetResourcesAsync(Guid directoryId);
     Task<ResourceDto?> GetResourceAsync(Guid id);
     Task<ResourceDto> CreateResourceAsync(Guid organizationId, Guid userId, CreateResourceRequestDto request);

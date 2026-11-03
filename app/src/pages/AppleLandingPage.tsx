@@ -1,3 +1,4 @@
+import { LinkVaultLogo } from '@/components/ui/LinkVaultLogo';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -51,12 +52,7 @@ export function AppleLandingPage() {
         <div className="flex flex-col gap-4">
           {/* Brand */}
           <div className="flex items-center gap-2.5 px-5 h-11">
-            <img
-              alt="LinkVault Logo"
-              className="h-6 w-auto object-contain"
-              src="https://lh3.googleusercontent.com/aida/AEtjO1UbcIUStZ-tEXrVwMgFcaav3KfhdgICONmzYt_ToqD3l-T0tPzgHcI9k8F76U7pDjTFWbaPw4_sD7IDBSW3HikuZEV4GwW-xfKkT9YPeo5PYWovV-VucNeTaG4rFr9V_0E5B_fuZimAh3bpdzprVPzhXd3fFRjwGvpcsaJU-c1umqXWTyXFuO0EQgYcOvx2cQxdDXUbcgETOUN6uyqBO_VE4G_XgDCL7PbbE0EIUFw"
-            />
-            <span className="text-[17px] font-semibold text-[#1D1D1F] dark:text-white tracking-[-0.015em]">LinkVault</span>
+            <LinkVaultLogo size={28} showText={true} />
           </div>
 
           {/* Quick Search */}

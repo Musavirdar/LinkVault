@@ -19,7 +19,7 @@ import { SharedFilePage } from '@/pages/SharedFilePage';
 import { TransferPage } from '@/pages/TransferPage';
 import { AgentPage } from '@/agent/pages/AgentPage';
 import { useStore } from '@/store/useStore';
-import { parseJwtPermissions } from '@/api/client';
+import { parseJwtPermissions, isJwtExpired } from '@/api/client';
 
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -29,18 +29,23 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
-  const { token, setPermissions, theme } = useStore();
+  const { token, setPermissions, theme, logout } = useStore();
 
   // Sync theme with document element
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     document.documentElement.classList.toggle('dark', theme === 'dark');
+    document.documentElement.classList.toggle('light', theme === 'light');
   }, [theme]);
 
   // Bootstrap permissions from stored token on page refresh
   useEffect(() => {
     if (token) {
-      setPermissions(parseJwtPermissions(token));
+      if (isJwtExpired(token)) {
+        logout();
+      } else {
+        setPermissions(parseJwtPermissions(token));
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

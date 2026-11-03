@@ -20,6 +20,14 @@ public class ResourcesController : ControllerBase
         _logger = logger;
     }
 
+    [HttpGet]
+    public async Task<ActionResult<List<ResourceDto>>> GetResources([FromQuery] Guid? directoryId)
+    {
+        var orgId = GetCurrentOrganizationId();
+        var resources = await _resourceService.GetAllResourcesAsync(orgId, directoryId);
+        return Ok(resources);
+    }
+
     [HttpGet("{id}")]
     public async Task<ActionResult<ResourceDto>> GetResource(Guid id)
     {

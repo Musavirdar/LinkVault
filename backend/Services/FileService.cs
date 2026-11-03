@@ -35,8 +35,10 @@ public class FileService : IFileService
 
     public async Task<string> SaveFileAsync(IFormFile file, Guid userId)
     {
-        var uploadsRoot = _config.GetValue<string>("FileStorage:UploadsPath") 
-            ?? Path.Combine(_env.ContentRootPath, "uploads");
+        var configuredPath = _config.GetValue<string>("FileStorage:UploadsPath");
+        var uploadsRoot = !string.IsNullOrWhiteSpace(configuredPath)
+            ? configuredPath
+            : Path.Combine(_env.ContentRootPath, "uploads");
 
         var userFolder = Path.Combine(uploadsRoot, userId.ToString());
         Directory.CreateDirectory(userFolder);
@@ -60,8 +62,10 @@ public class FileService : IFileService
 
     public Task DeleteFileAsync(string relativePath)
     {
-        var uploadsRoot = _config.GetValue<string>("FileStorage:UploadsPath")
-            ?? Path.Combine(_env.ContentRootPath, "uploads");
+        var configuredPath = _config.GetValue<string>("FileStorage:UploadsPath");
+        var uploadsRoot = !string.IsNullOrWhiteSpace(configuredPath)
+            ? configuredPath
+            : Path.Combine(_env.ContentRootPath, "uploads");
 
         // relativePath is like /uploads/{userId}/{filename}
         var diskPath = Path.Combine(_env.ContentRootPath, relativePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));

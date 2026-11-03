@@ -136,7 +136,7 @@ public class DirectoriesController : ControllerBase
             return Forbid();
         }
         
-        var resources = await _resourceService.GetResourcesAsync(id);
+        var resources = await _resourceService.GetAllResourcesAsync(orgId, id);
         return Ok(resources);
     }
 

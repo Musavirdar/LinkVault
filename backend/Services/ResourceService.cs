@@ -111,10 +111,36 @@ public class ResourceService : IResourceService
     }
 
     // Resources
+    public async Task<List<ResourceDto>> GetAllResourcesAsync(Guid organizationId, Guid? directoryId = null)
+    {
+        var query = _context.Resources
+            .Where(r => r.OrganizationId == organizationId && r.IsActive && !r.IsDeleted);
+
+        if (directoryId.HasValue)
+        {
+            if (directoryId.Value == Guid.Empty)
+            {
+                query = query.Where(r => r.DirectoryId == null);
+            }
+            else
+            {
+                query = query.Where(r => r.DirectoryId == directoryId.Value);
+            }
+        }
+
+        var resources = await query
+            .Include(r => r.CreatedBy)
+            .Include(r => r.Directory)
+            .OrderByDescending(r => r.CreatedAt)
+            .ToListAsync();
+
+        return resources.Select(MapToResourceDto).ToList();
+    }
+
     public async Task<List<ResourceDto>> GetResourcesAsync(Guid directoryId)
     {
         var resources = await _context.Resources
-            .Where(r => r.DirectoryId == directoryId && r.IsActive && !r.IsDeleted)
+            .Where(r => r.DirectoryId.HasValue && r.DirectoryId.Value == directoryId && r.IsActive && !r.IsDeleted)
             .Include(r => r.CreatedBy)
             .Include(r => r.Directory)
             .OrderByDescending(r => r.CreatedAt)
