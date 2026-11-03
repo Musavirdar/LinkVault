@@ -30,6 +30,7 @@ public class AgentPlanResponse
     public string UserGoal { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
     public string? Summary { get; set; }
+    public string? ModelName { get; set; }
     public List<PlanStepDto> Steps { get; set; } = new();
     public bool RequiresUserApproval { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

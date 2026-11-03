@@ -17,7 +17,7 @@ namespace LinkVaultApi.Tests.Unit;
 public class AgentApprovalAndAuditTests
 {
     private readonly LinkVaultDbContext _dbContext;
-    private readonly Mock<IMetaLlamaClient> _mockLlamaClient = new();
+    private readonly Mock<IMetaModelClient> _mockModelClient = new();
     private readonly Mock<ISafeShareGuard> _mockSafeShareGuard = new();
     private readonly Mock<IStorageProvider> _mockStorageProvider = new();
     private readonly Mock<IHubContext<AgentHub>> _mockHubContext = new();
@@ -57,7 +57,7 @@ public class AgentApprovalAndAuditTests
 
         _service = new VaultAgentService(
             _dbContext,
-            _mockLlamaClient.Object,
+            _mockModelClient.Object,
             _mockSafeShareGuard.Object,
             _mockStorageProvider.Object,
             _mockHubContext.Object,

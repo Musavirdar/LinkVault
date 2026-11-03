@@ -3,7 +3,6 @@ namespace LinkVaultApi.Agent.Models;
 public class MetaModelConfig
 {
     public const string SectionName = "MetaModel";
-    public const string LegacySectionName = "MetaLlama";
 
     /// <summary>
     /// API Key is NEVER stored in configuration files; provided at runtime via META_MODEL_API_KEY.
@@ -16,44 +15,19 @@ public class MetaModelConfig
     public string BaseUrl { get; set; } = "https://inference.baseten.co/v1";
 
     /// <summary>
-    /// Verified Meta Hackathon model supporting tools, JSON mode, reasoning, and image input.
+    /// Verified Meta Hackathon model for Baseten: meta-models/muse-spark-open-1026.
     /// </summary>
-    public string ModelName { get; set; } = "meta-models/muse-spark-open";
+    public string ModelName { get; set; } = "meta-models/muse-spark-open-1026";
 
-    public string MuseSparkModel
-    {
-        get => ModelName;
-        set => ModelName = value;
-    }
+    /// <summary>
+    /// Optional guardrail model. If not set, META_GUARD_MODEL_NAME or ModelName is used.
+    /// </summary>
+    public string? GuardModelName { get; set; }
 
-    public string MuseGlimmerModel { get; set; } = "meta-models/Muse-Glimmer-30B";
+    /// <summary>
+    /// Optional vision model. If not set, META_VISION_MODEL_NAME is checked.
+    /// </summary>
+    public string? VisionModelName { get; set; }
 
-    public string VisionModel
-    {
-        get => ModelName; // Uses the same meta-models/muse-spark-open model with OpenAI image_url format
-        set => ModelName = value;
-    }
-
-    public string LlamaGuardModel { get; set; } = "meta-llama/Llama-Guard-3-8B";
-
-    // Compatibility aliases
-    public string Llama33Model
-    {
-        get => ModelName;
-        set => ModelName = value;
-    }
-
-    public string Llama31Model
-    {
-        get => MuseGlimmerModel;
-        set => MuseGlimmerModel = value;
-    }
-
-    public string LlamaVisionModel
-    {
-        get => VisionModel;
-        set => VisionModel = value;
-    }
-
-    public bool FallbackToLocal { get; set; } = true;
+    public int TimeoutSeconds { get; set; } = 30;
 }

@@ -35,6 +35,9 @@ public class AgentActionPlan
     [MaxLength(2000)]
     public string? Summary { get; set; }
 
+    [MaxLength(200)]
+    public string? ModelName { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public DateTime? ApprovedAt { get; set; }

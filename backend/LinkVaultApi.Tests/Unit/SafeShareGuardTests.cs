@@ -13,7 +13,7 @@ public class SafeShareGuardTests
 {
     private readonly LinkVaultDbContext _dbContext;
     private readonly Mock<IStorageProvider> _mockStorageProvider = new();
-    private readonly Mock<IMetaLlamaClient> _mockLlamaClient = new();
+    private readonly Mock<IMetaModelClient> _mockModelClient = new();
     private readonly Mock<ILogger<SafeShareGuard>> _mockLogger = new();
     private readonly SafeShareGuard _guard;
 
@@ -24,10 +24,13 @@ public class SafeShareGuardTests
             .Options;
         _dbContext = new LinkVaultDbContext(options);
 
+        _mockModelClient.Setup(c => c.HasApiKey).Returns(true);
+        _mockModelClient.Setup(c => c.ModelName).Returns("meta-models/muse-spark-open-1026");
+
         _guard = new SafeShareGuard(
             _dbContext,
             _mockStorageProvider.Object,
-            _mockLlamaClient.Object,
+            _mockModelClient.Object,
             _mockLogger.Object);
     }
 
@@ -85,9 +88,9 @@ public class SafeShareGuardTests
         // Arrange
         var content = "Quarterly Business Review Q3 2026. All KPIs achieved with 24% revenue growth.";
 
-        _mockLlamaClient
-            .Setup(c => c.ModerateContentWithLlamaGuardAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new LlamaGuardResult(true, 0, new List<string>(), "Clean document"));
+        _mockModelClient
+            .Setup(c => c.ScanContentSecurityAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GuardScanResult(true, 0, new List<string>(), "Clean document"));
 
         // Act
         var result = await _guard.ScanTextContentAsync(content, "Q3_Report.pdf");

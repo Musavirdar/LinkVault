@@ -20,7 +20,7 @@ public class AgentHardeningTests
 {
     private readonly LinkVaultDbContext _dbContext;
     private readonly IServiceScopeFactory _scopeFactory;
-    private readonly Mock<IMetaLlamaClient> _mockLlamaClient = new();
+    private readonly Mock<IMetaModelClient> _mockModelClient = new();
     private readonly Mock<ISafeShareGuard> _mockSafeShareGuard = new();
     private readonly Mock<IStorageProvider> _mockStorageProvider = new();
     private readonly Mock<IHubContext<AgentHub>> _mockHubContext = new();
@@ -37,7 +37,7 @@ public class AgentHardeningTests
         var dbName = $"AgentHardeningDb_{Guid.NewGuid()}";
         var services = new ServiceCollection();
         services.AddDbContext<LinkVaultDbContext>(opt => opt.UseInMemoryDatabase(dbName));
-        services.AddSingleton(_mockLlamaClient.Object);
+        services.AddSingleton(_mockModelClient.Object);
         services.AddSingleton(_mockSafeShareGuard.Object);
         services.AddSingleton(_mockStorageProvider.Object);
         services.AddSingleton(_mockHubContext.Object);
@@ -76,12 +76,12 @@ public class AgentHardeningTests
 
         _service = new VaultAgentService(
             _dbContext,
-            _mockLlamaClient.Object,
+            _mockModelClient.Object,
             _mockSafeShareGuard.Object,
             _mockStorageProvider.Object,
             _mockHubContext.Object,
-            _scopeFactory,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _scopeFactory);
     }
 
     private static ClaimsPrincipal CreateUserPrincipal(Guid userId, Guid orgId, string role = "Admin", Dictionary<string, string>? customClaims = null)
@@ -385,17 +385,17 @@ public class AgentHardeningTests
     public void ValidateToolArguments_EnforcesPerToolSchemaAnd10StepCapping()
     {
         // 1. create_directory: missing name
-        var (val1, err1) = MetaLlamaClient.ValidateToolArguments("create_directory", "{}");
+        var (val1, err1) = MetaModelClient.ValidateToolArguments("create_directory", "{}");
         val1.Should().BeFalse();
         err1.Should().Contain("name");
 
         // 2. move_resource: missing resourceId
-        var (val2, err2) = MetaLlamaClient.ValidateToolArguments("move_resource", "{}");
+        var (val2, err2) = MetaModelClient.ValidateToolArguments("move_resource", "{}");
         val2.Should().BeFalse();
         err2.Should().Contain("resourceId");
 
         // 3. create_share_link: invalid expiryDays
-        var (val3, err3) = MetaLlamaClient.ValidateToolArguments("create_share_link", JsonSerializer.Serialize(new
+        var (val3, err3) = MetaModelClient.ValidateToolArguments("create_share_link", JsonSerializer.Serialize(new
         {
             resourceId = Guid.NewGuid().ToString(),
             expiryDays = 500 // > 365
@@ -404,7 +404,7 @@ public class AgentHardeningTests
         err3.Should().Contain("expiryDays");
 
         // 4. Valid create_share_link
-        var (val4, err4) = MetaLlamaClient.ValidateToolArguments("create_share_link", JsonSerializer.Serialize(new
+        var (val4, err4) = MetaModelClient.ValidateToolArguments("create_share_link", JsonSerializer.Serialize(new
         {
             resourceId = Guid.NewGuid().ToString(),
             expiryDays = 14

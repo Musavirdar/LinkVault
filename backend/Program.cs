@@ -143,8 +143,7 @@ builder.Services.AddSingleton<IFileValidationService, FileValidationService>();
 
 // Meta Model & Workspace Agent Services
 builder.Services.Configure<MetaModelConfig>(builder.Configuration.GetSection(MetaModelConfig.SectionName));
-builder.Services.Configure<MetaLlamaConfig>(builder.Configuration.GetSection(MetaLlamaConfig.SectionName));
-builder.Services.AddHttpClient<IMetaLlamaClient, MetaLlamaClient>();
+builder.Services.AddHttpClient<IMetaModelClient, MetaModelClient>(client => client.Timeout = TimeSpan.FromSeconds(30));
 builder.Services.AddScoped<ISafeShareGuard, SafeShareGuard>();
 builder.Services.AddScoped<IVaultAgentService, VaultAgentService>();
 

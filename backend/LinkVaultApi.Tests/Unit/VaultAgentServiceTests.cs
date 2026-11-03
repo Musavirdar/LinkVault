@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Text.Json.Nodes;
 using FluentAssertions;
 using LinkVaultApi.Agent.Hubs;
 using LinkVaultApi.Agent.Models;
@@ -6,6 +7,7 @@ using LinkVaultApi.Agent.Services;
 using LinkVaultApi.Data;
 using LinkVaultApi.Models;
 using LinkVaultApi.Services;
+using LinkVaultApi.Tests.Fakes;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -17,7 +19,7 @@ namespace LinkVaultApi.Tests.Unit;
 public class VaultAgentServiceTests
 {
     private readonly LinkVaultDbContext _dbContext;
-    private readonly Mock<IMetaLlamaClient> _mockLlamaClient = new();
+    private readonly FakeMetaModelClient _fakeModelClient = new();
     private readonly Mock<ISafeShareGuard> _mockSafeShareGuard = new();
     private readonly Mock<IStorageProvider> _mockStorageProvider = new();
     private readonly Mock<IHubContext<AgentHub>> _mockHubContext = new();
@@ -59,7 +61,7 @@ public class VaultAgentServiceTests
 
         _service = new VaultAgentService(
             _dbContext,
-            _mockLlamaClient.Object,
+            _fakeModelClient,
             _mockSafeShareGuard.Object,
             _mockStorageProvider.Object,
             _mockHubContext.Object,
@@ -88,16 +90,25 @@ public class VaultAgentServiceTests
         };
 
         var dummyResourceId = Guid.NewGuid();
-        var fakeToolCalls = new List<LlamaToolCall>
+        _dbContext.Resources.Add(new Resource
         {
-            new("create_directory", "{\"name\":\"Invoices\"}", "Create folder 'Invoices'"),
-            new("move_resource", $"{{\"resourceId\":\"{dummyResourceId}\"}}", "Move invoices"),
-            new("create_share_link", $"{{\"resourceId\":\"{dummyResourceId}\",\"expiryDays\":7}}", "Share invoice for 7 days")
+            Id = dummyResourceId,
+            Name = "invoice_2026.pdf",
+            OrganizationId = _orgId,
+            CreatedById = _userId,
+            Type = ResourceType.File
+        });
+        await _dbContext.SaveChangesAsync();
+
+        var fakeToolCalls = new List<ModelToolCall>
+        {
+            new("call_1", "create_directory", "{\"name\":\"Invoices\"}"),
+            new("call_2", "move_resource", $"{{\"resourceId\":\"{dummyResourceId}\"}}"),
+            new("call_3", "create_share_link", $"{{\"resourceId\":\"{dummyResourceId}\",\"expiryDays\":7}}")
         };
 
-        _mockLlamaClient
-            .Setup(c => c.GenerateToolPlanAsync(request.UserGoal, It.IsAny<object>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new LlamaPlanResult("Proposed 3 steps to organize invoices", fakeToolCalls));
+        _fakeModelClient.OnChatCompletion = (msgs, tools, choice) =>
+            new ModelChatResponse("Proposed 3 steps to organize invoices", fakeToolCalls, _fakeModelClient.ModelName);
 
         // Act
         var response = await _service.GeneratePlanAsync(request, user);
@@ -220,11 +231,12 @@ public class VaultAgentServiceTests
         _dbContext.Resources.Add(res);
         await _dbContext.SaveChangesAsync();
 
-        WorkspaceContextDto? capturedContext = null;
-        _mockLlamaClient
-            .Setup(c => c.GenerateToolPlanAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
-            .Callback<string, object?, CancellationToken>((goal, ctx, ct) => capturedContext = ctx as WorkspaceContextDto)
-            .ReturnsAsync(new LlamaPlanResult("Plan", new List<LlamaToolCall> { new("list_directory", "{}") }));
+        string? capturedSystemPrompt = null;
+        _fakeModelClient.OnChatCompletion = (msgs, tools, choice) =>
+        {
+            capturedSystemPrompt = msgs.FirstOrDefault(m => m.Role == "system")?.Content;
+            return new ModelChatResponse("Inspected workspace", new List<ModelToolCall>(), _fakeModelClient.ModelName);
+        };
 
         var request = new CreatePlanRequest { UserGoal = "Organize my workspace" };
 
@@ -232,9 +244,9 @@ public class VaultAgentServiceTests
         await _service.GeneratePlanAsync(request, user);
 
         // Assert
-        capturedContext.Should().NotBeNull();
-        capturedContext!.OrganizationId.Should().Be(_orgId);
-        capturedContext.Directories.Should().Contain(d => d.Id == dir.Id && d.Name == "Existing Reports");
-        capturedContext.Resources.Should().Contain(r => r.Id == res.Id && r.Name == "Q3_Earnings.pdf");
+        capturedSystemPrompt.Should().NotBeNull();
+        capturedSystemPrompt!.Should().Contain("Existing Reports");
+        capturedSystemPrompt.Should().Contain("Q3_Earnings.pdf");
+        capturedSystemPrompt.Should().Contain(_orgId.ToString());
     }
 }

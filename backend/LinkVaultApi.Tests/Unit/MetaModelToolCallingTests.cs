@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using FluentAssertions;
+using LinkVaultApi.Agent.Exceptions;
 using LinkVaultApi.Agent.Models;
 using LinkVaultApi.Agent.Services;
 using Microsoft.Extensions.Logging;
@@ -14,20 +15,21 @@ namespace LinkVaultApi.Tests.Unit;
 
 public class MetaModelToolCallingTests
 {
-    private readonly Mock<ILogger<MetaLlamaClient>> _mockLogger = new();
+    private readonly Mock<ILogger<MetaModelClient>> _mockLogger = new();
 
     [Fact]
-    public void GetWorkspaceToolsDefinition_ReturnsAllSixToolsWithCorrectSchemas()
+    public void GetWorkspaceToolsDefinition_ReturnsToolsWithCorrectSchemas()
     {
         // Act
-        var tools = MetaLlamaClient.GetWorkspaceToolsDefinition();
+        var toolsNoVision = MetaModelClient.GetWorkspaceToolsDefinition(includeVision: false);
+        var toolsWithVision = MetaModelClient.GetWorkspaceToolsDefinition(includeVision: true);
 
         // Assert
-        tools.Should().NotBeNull();
-        tools.Count.Should().Be(6);
+        toolsNoVision.Count.Should().Be(6);
+        toolsWithVision.Count.Should().Be(7);
 
         var toolNames = new List<string>();
-        foreach (var tool in tools)
+        foreach (var tool in toolsNoVision)
         {
             var fn = tool?["function"];
             fn.Should().NotBeNull();
@@ -43,17 +45,17 @@ public class MetaModelToolCallingTests
 
         toolNames.Should().Contain(new[]
         {
+            "list_directory",
+            "search",
             "create_directory",
             "move_resource",
             "create_share_link",
-            "search",
-            "list_directory",
             "delete_resource"
         });
     }
 
     [Fact]
-    public async Task GenerateToolPlanAsync_SendsToolsArrayAndExtractsModelToolCalls()
+    public async Task ChatCompletionAsync_SendsToolsArrayAndExtractsModelToolCalls()
     {
         // Arrange
         HttpRequestMessage? capturedRequest = null;
@@ -85,7 +87,8 @@ public class MetaModelToolCallingTests
                             ["message"] = new JsonObject
                             {
                                 ["role"] = "assistant",
-                                ["content"] = "Plan synthesized via Meta Muse Spark tool calling.",
+                                ["content"] = null,
+                                ["reasoning_content"] = "Internal thinking that must be suppressed",
                                 ["tool_calls"] = new JsonArray
                                 {
                                     new JsonObject
@@ -125,13 +128,17 @@ public class MetaModelToolCallingTests
         {
             ApiKey = "test-meta-key",
             BaseUrl = "https://inference.baseten.co/v1",
-            ModelName = "meta-models/muse-spark-open"
+            ModelName = "meta-models/muse-spark-open-1026"
         });
 
-        var client = new MetaLlamaClient(config, httpClient, _mockLogger.Object);
+        var client = new MetaModelClient(config, httpClient, _mockLogger.Object);
+        var tools = MetaModelClient.GetWorkspaceToolsDefinition(false);
 
         // Act
-        var result = await client.GenerateToolPlanAsync("Create Quarterly Reports and move file into it");
+        var result = await client.ChatCompletionAsync(new List<ModelChatMessage>
+        {
+            new("user", "Create Quarterly Reports and move file into it")
+        }, tools);
 
         // Assert: Request payload verification
         capturedRequest.Should().NotBeNull();
@@ -142,11 +149,10 @@ public class MetaModelToolCallingTests
         parsedBody?["tools"].Should().NotBeNull();
         parsedBody?["tools"]?.AsArray().Count.Should().Be(6);
         parsedBody?["tool_choice"]?.ToString().Should().Be("auto");
-        parsedBody?["model"]?.ToString().Should().Be("meta-models/muse-spark-open");
+        parsedBody?["model"]?.ToString().Should().Be("meta-models/muse-spark-open-1026");
 
-        // Assert: Plan result verification (extracted from model tool calls)
+        // Assert: Result verification
         result.Should().NotBeNull();
-        result.Summary.Should().Contain("Meta Muse Spark");
         result.ToolCalls.Should().HaveCount(2);
         result.ToolCalls[0].ToolName.Should().Be("create_directory");
         result.ToolCalls[0].ArgumentsJson.Should().Contain("Quarterly Reports");
@@ -154,9 +160,10 @@ public class MetaModelToolCallingTests
     }
 
     [Fact]
-    public async Task GenerateToolPlanAsync_WhenToolCallsReturned_HandlesNullContentAndIgnoresReasoningContent()
+    public async Task ChatCompletionAsync_RetriesOnceOn429_AndSucceeds()
     {
-        // Arrange: Verified fact: When tool calls are returned, message.content is null; reasoning_content must be ignored
+        // Arrange
+        int attempts = 0;
         var mockHandler = new Mock<HttpMessageHandler>();
         mockHandler.Protected()
             .Setup<Task<HttpResponseMessage>>(
@@ -165,7 +172,12 @@ public class MetaModelToolCallingTests
                 ItExpr.IsAny<CancellationToken>())
             .ReturnsAsync(() =>
             {
-                var fakeResourceId = Guid.NewGuid().ToString();
+                attempts++;
+                if (attempts == 1)
+                {
+                    return new HttpResponseMessage(HttpStatusCode.TooManyRequests);
+                }
+
                 var responseJson = new JsonObject
                 {
                     ["choices"] = new JsonArray
@@ -175,21 +187,7 @@ public class MetaModelToolCallingTests
                             ["message"] = new JsonObject
                             {
                                 ["role"] = "assistant",
-                                ["content"] = null,
-                                ["reasoning_content"] = "Thinking: User wants to move file...",
-                                ["tool_calls"] = new JsonArray
-                                {
-                                    new JsonObject
-                                    {
-                                        ["id"] = "call_move_1",
-                                        ["type"] = "function",
-                                        ["function"] = new JsonObject
-                                        {
-                                            ["name"] = "move_resource",
-                                            ["arguments"] = $"{{\"resourceId\":\"{fakeResourceId}\"}}"
-                                        }
-                                    }
-                                }
+                                ["content"] = "Response after rate limit retry"
                             }
                         }
                     }
@@ -206,99 +204,49 @@ public class MetaModelToolCallingTests
         {
             ApiKey = "test-meta-key",
             BaseUrl = "https://inference.baseten.co/v1",
-            ModelName = "meta-models/muse-spark-open"
+            ModelName = "meta-models/muse-spark-open-1026"
         });
 
-        var client = new MetaLlamaClient(config, httpClient, _mockLogger.Object);
+        var client = new MetaModelClient(config, httpClient, _mockLogger.Object);
 
         // Act
-        var result = await client.GenerateToolPlanAsync("Move my document");
+        var result = await client.ChatCompletionAsync(new List<ModelChatMessage> { new("user", "Hello") });
 
         // Assert
+        attempts.Should().Be(2);
         result.Should().NotBeNull();
-        result.Summary.Should().Be("Synthesized plan containing 1 step(s).");
-        result.Summary.Should().NotContain("Thinking");
-        result.ToolCalls.Should().HaveCount(1);
-        result.ToolCalls[0].ToolName.Should().Be("move_resource");
+        result.Content.Should().Be("Response after rate limit retry");
     }
 
     [Fact]
-    public async Task GenerateToolPlanAsync_WhenRemoteApiFails_GracefullyFallsBackToLocalPlanner()
+    public async Task ChatCompletionAsync_RemoteFailure_ThrowsModelUnavailableException()
     {
-        // Arrange: Mock handler returns HTTP 502 Bad Gateway
+        // Arrange: Mock handler returns 503
         var mockHandler = new Mock<HttpMessageHandler>();
         mockHandler.Protected()
             .Setup<Task<HttpResponseMessage>>(
                 "SendAsync",
                 ItExpr.IsAny<HttpRequestMessage>(),
                 ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.BadGateway));
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.ServiceUnavailable));
 
         var httpClient = new HttpClient(mockHandler.Object);
         var config = Options.Create(new MetaModelConfig
         {
             ApiKey = "test-meta-key",
             BaseUrl = "https://inference.baseten.co/v1",
-            ModelName = "meta-models/muse-spark-open"
+            ModelName = "meta-models/muse-spark-open-1026"
         });
 
-        var client = new MetaLlamaClient(config, httpClient, _mockLogger.Object);
+        var client = new MetaModelClient(config, httpClient, _mockLogger.Object);
 
-        // Act
-        var result = await client.GenerateToolPlanAsync("Organize my invoices into an Invoices folder and share the latest invoice for 7 days");
-
-        // Assert: Local fallback safely engaged
-        result.Should().NotBeNull();
-        result.ToolCalls.Should().NotBeEmpty();
-        result.ToolCalls.Should().Contain(t => t.ToolName == "create_directory");
+        // Act & Assert
+        await Assert.ThrowsAsync<ModelUnavailableException>(() =>
+            client.ChatCompletionAsync(new List<ModelChatMessage> { new("user", "Test") }));
     }
 
     [Fact]
-    public async Task GenerateToolPlanAsync_WithWorkspaceContext_InjectsRealIdsIntoLocalFallbackPlan()
-    {
-        // Arrange
-        var mockHandler = new Mock<HttpMessageHandler>();
-        var httpClient = new HttpClient(mockHandler.Object);
-        var config = Options.Create(new MetaModelConfig
-        {
-            ApiKey = "", // Forces local planner fallback
-            ModelName = "meta-models/muse-spark-open"
-        });
-        var client = new MetaLlamaClient(config, httpClient, _mockLogger.Object);
-
-        var realResourceId = Guid.NewGuid();
-        var realDirId = Guid.NewGuid();
-        var context = new WorkspaceContextDto
-        {
-            OrganizationId = Guid.NewGuid(),
-            UserId = Guid.NewGuid(),
-            Directories = new List<WorkspaceDirectoryContext>
-            {
-                new() { Id = realDirId, Name = "Invoices" }
-            },
-            Resources = new List<WorkspaceResourceContext>
-            {
-                new() { Id = realResourceId, Name = "invoice_2026_Q3.pdf", Type = "File" }
-            }
-        };
-
-        // Act
-        var result = await client.GenerateToolPlanAsync("Move invoice to Invoices and share it", context);
-
-        // Assert
-        result.Should().NotBeNull();
-        var moveCall = result.ToolCalls.FirstOrDefault(t => t.ToolName == "move_resource");
-        moveCall.Should().NotBeNull();
-        moveCall!.ArgumentsJson.Should().Contain(realResourceId.ToString());
-        moveCall.ArgumentsJson.Should().Contain(realDirId.ToString());
-
-        var shareCall = result.ToolCalls.FirstOrDefault(t => t.ToolName == "create_share_link");
-        shareCall.Should().NotBeNull();
-        shareCall!.ArgumentsJson.Should().Contain(realResourceId.ToString());
-    }
-
-    [Fact]
-    public async Task ClassifyImageWithVisionAsync_SendsOpenAiImageUrlFormat_ParsesResponse()
+    public async Task ClassifyImageAsync_SendsOpenAiImageUrlFormat_ParsesResponse()
     {
         // Arrange
         HttpRequestMessage? capturedRequest = null;
@@ -346,60 +294,37 @@ public class MetaModelToolCallingTests
         {
             ApiKey = "test-meta-key",
             BaseUrl = "https://inference.baseten.co/v1",
-            ModelName = "meta-models/muse-spark-open"
+            ModelName = "meta-models/muse-spark-open-1026",
+            VisionModelName = "meta-models/muse-spark-open-1026"
         });
 
-        var client = new MetaLlamaClient(config, httpClient, _mockLogger.Object);
-        var sampleBytes = new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A }; // PNG magic bytes
+        var client = new MetaModelClient(config, httpClient, _mockLogger.Object);
+        var sampleBytes = new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
 
         // Act
-        var result = await client.ClassifyImageWithVisionAsync(sampleBytes, "image/png");
+        var result = await client.ClassifyImageAsync(sampleBytes, "image/png");
 
-        // Assert: Request payload verification
+        // Assert
         capturedRequest.Should().NotBeNull();
         capturedRequest!.RequestUri!.ToString().Should().Be("https://inference.baseten.co/v1/chat/completions");
         capturedBody.Should().NotBeNull();
 
-        var parsedBody = JsonNode.Parse(capturedBody!);
-        parsedBody?["model"]?.ToString().Should().Be("meta-models/muse-spark-open");
-
-        var userMessage = parsedBody?["messages"]?[0];
-        userMessage?["role"]?.ToString().Should().Be("user");
-
-        var contentArray = userMessage?["content"]?.AsArray();
-        contentArray.Should().NotBeNull();
-        contentArray!.Count.Should().Be(2);
-        contentArray[0]?["type"]?.ToString().Should().Be("text");
-        contentArray[1]?["type"]?.ToString().Should().Be("image_url");
-
-        var imageUrl = contentArray[1]?["image_url"]?["url"]?.ToString();
-        imageUrl.Should().StartWith("data:image/png;base64,");
-
-        // Assert: Parsed result
         result.Should().NotBeNull();
-        result.Category.Should().Be("Architecture Diagrams");
+        result!.Category.Should().Be("Architecture Diagrams");
         result.Description.Should().Be("Cloud infrastructure schematic");
         result.Confidence.Should().Be(0.96);
     }
 
     [Fact]
-    public void MetaModelConfig_DefaultsToVerifiedBasetenEndpointAndMuseSpark()
+    public void MetaModelConfig_DefaultsToVerifiedBasetenEndpointAndHackathonModel()
     {
         // Arrange & Act
         var config = new MetaModelConfig();
-        var llamaConfig = new MetaLlamaConfig();
 
-        // Assert: BaseUrl and Model defaults
+        // Assert
         config.BaseUrl.Should().Be("https://inference.baseten.co/v1");
-        config.ModelName.Should().Be("meta-models/muse-spark-open");
-        config.VisionModel.Should().Be("meta-models/muse-spark-open");
-        config.MuseSparkModel.Should().Be("meta-models/muse-spark-open");
-        config.MuseGlimmerModel.Should().Be("meta-models/Muse-Glimmer-30B");
+        config.ModelName.Should().Be("meta-models/muse-spark-open-1026");
         config.ApiKey.Should().BeEmpty();
-
-        llamaConfig.BaseUrl.Should().Be("https://inference.baseten.co/v1");
-        llamaConfig.ModelName.Should().Be("meta-models/muse-spark-open");
-        llamaConfig.Llama33Model.Should().Be("meta-models/muse-spark-open");
-        llamaConfig.Llama31Model.Should().Be("meta-models/Muse-Glimmer-30B");
+        config.TimeoutSeconds.Should().Be(30);
     }
 }

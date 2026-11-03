@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using LinkVaultApi.Agent.Exceptions;
 using LinkVaultApi.Agent.Models;
 using LinkVaultApi.Agent.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -51,6 +52,15 @@ public class AgentController : ControllerBase
         catch (UnauthorizedAccessException ex)
         {
             return Unauthorized(new { error = ex.Message });
+        }
+        catch (ModelUnavailableException ex)
+        {
+            _logger.LogWarning("Meta model outage / unavailable: {Message}", ex.Message);
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new
+            {
+                error = ex.Message,
+                model = ex.ModelName
+            });
         }
         catch (Exception ex)
         {
