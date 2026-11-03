@@ -45,6 +45,40 @@ Rather than basic Retrieval-Augmented Generation (RAG) that merely summarizes te
 
 ---
 
+## 🏆 Alignment with Official Hackathon Judging Criteria (100%)
+
+LinkVault Agent is precision-engineered to excel against the official judging criteria for the **Meta Global AI Developer Hackathon**:
+
+### 1. Impact (30%)
+- **Problem**: Enterprise AI adoption faces a fundamental roadblock: the "runaway agent" risk. Organizations want autonomous AI agents to organize assets, manage access, and generate share links, but fear hallucinated file deletions, cross-tenant data leaks, and secret exfiltration.
+- **Solution**: LinkVault Agent introduces **Verifiable Agent Architecture**. Every action requires pre-execution visibility, human-in-the-loop approvals, tenant scoping, and atomic concurrency controls.
+- **Who Benefits**: Any security-conscious organization, engineering team, or regulated enterprise managing confidential files, contracts, and credentials across cloud storage.
+- **Real-World Value**: Bridges the gap between autonomous AI convenience and enterprise zero-trust compliance, preventing multi-million dollar data breaches caused by accidental public link sharing.
+
+### 2. Use of Meta AI Tooling (25%)
+- **Primary Model**: Powered by **Meta Muse Spark Open** (`meta-models/muse-spark-open-1026`) via Baseten's OpenAI-compatible endpoint.
+- **Beyond Basic Chat / RAG**:
+  - **Multi-Round Planning Loop**: Up to 5 iterative reasoning rounds where read-only tools (`list_directory`, `search`) execute immediately to feed live workspace state back into the model.
+  - **Real Entity GUID Context Injection**: The model reasons over real database entity IDs, parents, and MIME types rather than hallucinating paths.
+  - **Pre-Share Model Guardrail**: Employs Meta model evaluation over file contents (first 8 KB) as a secondary defense layer to detect exposed credentials, database passwords, and API secrets.
+  - **Tool Precision**: Strict JSON Schema enforcement with zero fake fallbacks—outages surface authentic HTTP 503 error states.
+
+### 3. Technical Depth & Execution (20%)
+- **Enterprise-Grade Stack**: ASP.NET Core 8 Web API, PostgreSQL with Entity Framework Core, React 19, TypeScript, Tailwind CSS, and SignalR WebSockets.
+- **Atomic Concurrency Control**: Prevents race conditions and double-approval exploits via database-level `ExecuteUpdateAsync` emitting `409 Conflict`.
+- **Isolated Execution**: Background tasks run in dedicated `IServiceScopeFactory` service scopes, ensuring transactional isolation from HTTP requests.
+- **Platform Hardening**: Single-use cryptographic download tickets (`POST /api/files/{id}/ticket`), magic-byte file signature validation, and reverse proxy IP spoofing prevention (`ForwardLimit = 1`).
+- **Exhaustive Test Coverage**: **71 passing xUnit tests** covering model clients, multi-round loops, RBAC boundaries, and Safe Share guards, plus a dedicated **Playwright E2E suite** with automated GitHub Actions CI pipeline.
+
+### 4. Demo & Presentation (25%)
+- **One-Click Evaluator Demo Mode (`DEMO_MODE=true`)**: Judges can immediately click **"Try Demo (Admin)"** or **"Try Demo (Member)"** on `/login` to explore an auto-seeded workspace (15 files, 5 folders, 5 links) with zero setup friction and no 2FA obstacle.
+- **Live SignalR Progress Stream**: Visualizes step execution progress in real time (Pending ➔ Running ➔ Completed) over WebSockets.
+- **Live Safe Share Threat Demonstration**: Includes a pre-seeded `database_backup_config.env` with fake credentials that triggers the Safe Share Guard live, proving that sensitive secrets are blocked before links are issued.
+- **Apple Human Interface Guidelines Frontend**: SF Pro typography, translucent frosted glass (`backdrop-blur-2xl`), 20px squircle cards, 12px controls, hairline borders, and tactile spring physics.
+- **Comprehensive E2E Suite**: Playwright suite in `app/e2e/demo-flow.spec.ts` testing the entire demo flow against an in-process fake model double.
+
+---
+
 ## 📂 Key Folders & Architecture
 
 ### Backend (`backend/Agent/`)
