@@ -1,4 +1,4 @@
-# LinkVault — Enterprise Digital Workspace & Secure Content Hub
+# LinkVault — Enterprise Digital Workspace & Verifiable AI Agent
 
 [![CI](https://github.com/Musavirdar/LinkVault/actions/workflows/ci.yml/badge.svg)](https://github.com/Musavirdar/LinkVault/actions/workflows/ci.yml)
 [![.NET 8](https://img.shields.io/badge/.NET-8.0-blue.svg)](https://dotnet.microsoft.com/)
@@ -6,93 +6,99 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178c6.svg)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**LinkVault** is an enterprise-grade, multi-tenant digital workspace combining secure file management, link hubs, hierarchical directories, real-time collaboration, and audit telemetry in a single high-performance platform.
+**LinkVault** is an enterprise-grade digital workspace and verifiable AI assistant combining secure file management, link hubs, hierarchical directories, real-time collaboration, and an autonomous AI agent powered by **Meta Muse Spark Open** (`meta-models/muse-spark-open-1026`).
 
-Designed for organizations requiring strict tenant isolation, zero-trust file streaming, and end-to-end audit compliance.
+Built for the **Meta Hackathon**, LinkVault Agent implements *"Agents 102: Verifiable Agents"* — autonomous multi-step planning with human-in-the-loop approval gating, live SignalR progress streaming, Safe Share secret detection, zero-trust audit attribution, and an Apple HIG frontend.
 
 ---
 
-## 📸 Product Overview & Highlights
+## 🌟 Verifiable AI Workspace Agent Highlights
 
-![LinkVault Dashboard](screenshots/dashboard.png)
-
-### Key Capabilities
-
-| Feature | Description | Screenshot |
-|---|---|---|
-| **Secure Files & Chunked Uploads** | Large-file chunked uploading with real-time assembly, magic-byte inspection, SVG XSS sanitization, and atomic single-use download tickets. | ![Files](screenshots/files.png) |
-| **Link Hub & Public Profiles** | Centralized link vault with link scheduling, click tracking, custom slugs, and customizable public profile pages. | ![Links](screenshots/links.png) |
-| **Hierarchical Directories** | Multi-level directory structures with role-based folder permissions, recursive navigation, and inheritance. | ![Directories](screenshots/directories.png) |
-| **Real-Time Analytics & Audit** | Built-in analytics tracking views, downloads, clicks, and immutable admin audit trails with actor and IP attribution. | ![Analytics](screenshots/analytics.png) |
-| **Enterprise Authentication** | JWT authentication with refresh tokens, TOTP two-factor authentication (2FA), OAuth (Google, GitHub), and reverse-proxy rate limiting. | ![Login](screenshots/login.png) |
+| Capability | Description |
+|---|---|
+| **Meta Model Integration** | Powered by **Meta Muse Spark Open** (`meta-models/muse-spark-open-1026`) via Baseten's OpenAI-compatible Chat Completions API (`https://inference.baseten.co/v1`). |
+| **Multi-Round Planning Loop** | Context-aware planner that executes read-only query tools (`list_directory`, `search`) immediately during planning (up to 5 rounds) to gather real workspace entity IDs, while compiling state-changing tools into an actionable plan. |
+| **Human-in-the-Loop Gating** | State-altering operations (moving files, creating folders, generating public share links, deleting resources) require explicit user approval. Protected by atomic concurrency guards (`409 Conflict`). |
+| **Isolated Execution & SignalR Streaming** | Approved plans execute inside dedicated `IServiceScopeFactory` scopes with live WebSocket updates (`/hubs/agent`) for step initiation, execution receipts, and completion. |
+| **Safe Share Guardrail** | Two-tier secret leak detection combining deterministic regex and model verification over the first 8 KB of text files, blocking accidental sharing of database credentials, private keys, or API tokens. |
+| **Native Voice Dictation** | Zero-latency speech recognition powered directly by the browser's Web Speech API (`SpeechRecognition`). |
+| **One-Click Evaluator Demo** | Built-in demo mode (`DEMO_MODE=true`) with automatic workspace seeding (15 files, 5 folders, 5 links) and one-click login for Admin and Member roles without 2FA. |
 
 ---
 
 ## 🛠️ Architecture & Tech Stack
 
 ```text
-├── app/                        # Frontend: React 18 + TypeScript + Vite + Tailwind CSS
+├── app/                        # Frontend: React 18 + TypeScript + Vite + Tailwind CSS (Apple HIG)
+│   ├── src/agent/              # Agent UI: chat, preview modal, SignalR progress stream, Safe Share alert
+│   └── src/pages/              # Dashboard, Files, Links, Directories, Audit, Login, Landing
 ├── backend/                    # Backend API: ASP.NET Core 8 Web API + EF Core 8
-│   ├── Controllers/            # REST API endpoints & chunked upload controllers
+│   ├── Agent/                  # Agent subsystem
+│   │   ├── Controllers/        # /api/agent/plan, /approve, /reject, /safe-share/scan
+│   │   ├── Hubs/               # AgentHub SignalR WebSocket endpoint
+│   │   ├── Models/             # AgentActionPlan, PlanStep, SafeShareScan, MetaModelConfig
+│   │   └── Services/           # MetaModelClient, VaultAgentService, SafeShareGuard
+│   ├── Controllers/            # Auth, Files, Links, Directories, Audit REST controllers
 │   ├── Data/                   # LinkVaultDbContext & PostgreSQL configuration
-│   ├── Middleware/             # Security headers, rate limiting, audit & error handling
-│   ├── Models/                 # Domain entities & relationships
-│   ├── Services/               # File validation, storage providers, JWT, auth
-│   └── LinkVaultApi.Tests/     # xUnit integration and unit test suite
+│   ├── Services/               # DemoSeedService, FileValidation, Storage, JWT, Auth
+│   └── LinkVaultApi.Tests/     # xUnit test suite (71 automated unit & integration tests)
 ├── docker-compose.yml          # Containerized local environment (PostgreSQL & API)
-├── screenshots/                # Application UI walkthrough imagery
 └── sharedb1.sln                # Root .NET Solution file
 ```
 
-- **Frontend**: React 18, TypeScript, Tailwind CSS, Lucide React, Vite
-- **Backend API**: ASP.NET Core 8 Web API, Entity Framework Core 8, SignalR (Real-time collaboration)
-- **Database**: PostgreSQL 16 (with connection pooling and automatic migrations)
-- **Storage**: Pluggable storage provider architecture (Local filesystem / Cloud storage abstraction)
-- **Security**: Strict startup validation, Magic-byte verification, Atomic DB ticket redemption, Reverse-proxy IP partition
+---
+
+## ⚙️ Environment Variables & Configuration
+
+All secrets and model parameters are read exclusively from environment variables:
+
+| Variable | Description | Default / Example |
+|---|---|---|
+| `META_MODEL_BASE_URL` | Baseten / Meta OpenAI-compatible endpoint | `https://inference.baseten.co/v1` |
+| `META_MODEL_API_KEY` | Your Baseten or Meta Model API key | `""` (Set in your environment) |
+| `META_MODEL_NAME` | Primary hackathon model | `meta-models/muse-spark-open-1026` |
+| `META_GUARD_MODEL_NAME` | Optional dedicated security guard model | `""` |
+| `META_VISION_MODEL_NAME` | Optional multimodal vision model | `""` |
+| `DEMO_MODE` | Enables demo workspace seeding & one-click login | `"true"` (for demo/evaluator) |
+| `ConnectionStrings__DefaultConnection` | PostgreSQL connection string | `Host=localhost;Database=linkvault;...` |
+| `JwtSettings__Secret` | Cryptographically random 256-bit JWT secret | (At least 32 characters) |
+| `ASPNETCORE_FORWARDEDHEADERS_ENABLED` | Reverse proxy forwarded header handling | `"true"` |
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Quickstart & Running the App
 
-### Prerequisites
+### 1. Prerequisites
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
 - [Node.js 18+](https://nodejs.org/) & npm
-- [PostgreSQL 16](https://www.postgresql.org/) or [Docker Desktop](https://www.docker.com/)
+- [PostgreSQL 14+](https://www.postgresql.org/) or [Docker Desktop](https://www.docker.com/)
 
-### 1. Environment Setup
-
-Copy example environment configurations and provide your local credentials:
-
+### 2. Configure Environment
 ```bash
-# Set runtime environment variables
-export ConnectionStrings__DefaultConnection="Host=localhost;Port=5432;Database=linkvault;Username=postgres;Password=your_secure_password"
+export META_MODEL_BASE_URL="https://inference.baseten.co/v1"
+export META_MODEL_API_KEY="your-baseten-api-key"
+export META_MODEL_NAME="meta-models/muse-spark-open-1026"
+export DEMO_MODE="true"
 export JwtSettings__Secret="your-at-least-32-byte-long-secure-production-key-here"
-export ASPNETCORE_FORWARDEDHEADERS_ENABLED="true" # Required behind platform proxies (Render, Cloudflare, container ingress)
 ```
 
 *(On Windows PowerShell):*
 ```powershell
-$env:ConnectionStrings__DefaultConnection = "Host=localhost;Port=5432;Database=linkvault;Username=postgres;Password=your_secure_password"
+$env:META_MODEL_BASE_URL = "https://inference.baseten.co/v1"
+$env:META_MODEL_API_KEY = "your-baseten-api-key"
+$env:META_MODEL_NAME = "meta-models/muse-spark-open-1026"
+$env:DEMO_MODE = "true"
 $env:JwtSettings__Secret = "your-at-least-32-byte-long-secure-production-key-here"
-$env:ASPNETCORE_FORWARDEDHEADERS_ENABLED = "true" # Required behind platform proxies (Render, Cloudflare, container ingress)
 ```
 
-### 2. Run with Docker Compose
-
-```bash
-docker-compose up -d
-```
-
-### 3. Run Locally from Source
-
-#### Backend API
+### 3. Run Backend API
 ```powershell
 cd backend
 dotnet run
 ```
-API runs on `http://localhost:5000` (Swagger available at `http://localhost:5000/swagger` in development).
+API runs on `http://localhost:5000` (or `http://localhost:5246`). Health check: `/health`.
 
-#### Frontend Client
+### 4. Run Frontend Client
 ```powershell
 cd app
 npm install
@@ -100,45 +106,30 @@ npm run dev
 ```
 Client runs on `http://localhost:5173`.
 
-### 4. Running Automated Tests
-
+### 5. Running Automated Tests
 ```powershell
-dotnet test sharedb1.sln
+dotnet test backend/LinkVaultApi.Tests
 ```
+All 71 xUnit unit and integration tests execute with zero network dependencies using fake model clients.
 
 ---
 
-## 🔒 Security Hardening & Zero-Trust Architecture
+## 🎯 Evaluator Demo Instructions (One-Click)
 
-LinkVault enforces defense-in-depth across the application lifecycle:
-
-1. **Zero-Secret Configuration**: No committed credentials or passwords in any configuration file (`appsettings.json`, `docker-compose.yml`, `.env*`).
-2. **Strict Fail-Fast Startup Validation**: Startup validation actively detects and halts boot if keys match known default placeholders, compromised passwords, or keys under 32 bytes.
-3. **Atomic Download Ticket Consumption**: Single-use download tickets are consumed via database-level atomic operations, eliminating concurrent race-condition replay attacks while validating that the target resource and user are active.
-4. **Deep File Content Validation**: Magic-byte inspection for all uploads, including full-payload streaming validation of assembled chunked files and complete SVG sanitization against script injection.
-5. **Anti-Spoofing Reverse-Proxy Rate Limiting**: `UseForwardedHeaders` enforces `ForwardLimit = 1` and retains default trusted proxy loopback validation, preventing malicious clients from injecting arbitrary `X-Forwarded-For` chains to evade rate limits. Platform deployments on Render enable `ASPNETCORE_FORWARDEDHEADERS_ENABLED=true` to automatically configure platform proxy header processing.
-6. **Cloud Credential Remediation & Invalidation**: Permanently purged cloud deployment configuration files (`.env.render`), applied universal `.env*` ignore rules, and blacklisted compromised passwords and placeholder JWT strings in `StartupValidator.cs`.
-
----
-
-## 📐 Engineering & Specifications (Spec-Driven Development)
-
-LinkVault is developed under official **[GitHub Spec Kit](https://github.com/github/spec-kit)** methodology (Spec-Driven Development). Feature specifications, plans, and task breakdowns are maintained as first-class architectural artifacts:
-
-- `specs/001-security-access-hardening/`: Core access control, upload validation, rate limiting, and audit isolation.
-- `specs/002-core-hardening-and-cleanup/`: Repository canonicalization, zero-secret enforcement, chunked upload validation, atomic ticket consumption, and proxy rate limiting.
-- `specs/003-purge-committed-credentials/`: Purge of committed credentials, universal environment file ignore rules, fail-fast startup blacklists, and Render secret rotation runbook.
-
-### Spec Kit Workflow Commands
-
-| Command | Skill | Purpose |
-|---|---|---|
-| `/speckit-specify [desc]` | `speckit-specify` | Create or update feature specification |
-| `/speckit-clarify` | `speckit-clarify` | Identify and clarify ambiguous spec requirements |
-| `/speckit-plan [feature]` | `speckit-plan` | Generate architecture and implementation plan |
-| `/speckit-tasks [feature]` | `speckit-tasks` | Break plan down into dependency-ordered atomic tasks |
-| `/speckit-implement [feature]` | `speckit-implement` | Execute tasks sequentially with test verification |
-| `/speckit-converge [feature]` | `speckit-converge` | Verify completed implementation against spec |
+1. Open `http://localhost:5173/login`.
+2. In the **Hackathon Evaluator Quick Access** card at the top, click **"Try Demo (Admin)"**.
+   - Bypasses 2FA, logs into the seeded `Acme Corp Demo Workspace`, and redirects to `/agent`.
+3. Give the agent an instruction:
+   - *"Organize my uploads into an Invoices folder and share the latest invoice for 7 days."*
+4. Review the generated plan in the **Plan Review Modal**:
+   - Inspect the referenced real file IDs, tool types, and model name.
+5. Click **Approve Plan**:
+   - Observe real-time SignalR progress streaming as steps transition from Pending to Completed.
+6. Test Safe Share:
+   - Try creating a share link for `database_backup_config.env` (seeded with test database credentials).
+   - Observe the Safe Share Guard block the action to prevent unconfirmed data leakage.
+7. Open `/audit`:
+   - Verify zero-trust accountability with the `[via agent]` badge identifying all autonomous changes.
 
 ---
 
