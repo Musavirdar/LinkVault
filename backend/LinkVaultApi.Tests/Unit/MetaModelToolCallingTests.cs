@@ -128,7 +128,7 @@ public class MetaModelToolCallingTests
         {
             ApiKey = "test-meta-key",
             BaseUrl = "https://inference.baseten.co/v1",
-            ModelName = "meta-models/muse-spark-open-1026"
+            ModelName = "meta-models/muse-spark-open"
         });
 
         var client = new MetaModelClient(config, httpClient, _mockLogger.Object);
@@ -149,7 +149,7 @@ public class MetaModelToolCallingTests
         parsedBody?["tools"].Should().NotBeNull();
         parsedBody?["tools"]?.AsArray().Count.Should().Be(6);
         parsedBody?["tool_choice"]?.ToString().Should().Be("auto");
-        parsedBody?["model"]?.ToString().Should().Be("meta-models/muse-spark-open-1026");
+        parsedBody?["model"]?.ToString().Should().Be("meta-models/muse-spark-open");
 
         // Assert: Result verification
         result.Should().NotBeNull();
@@ -204,7 +204,7 @@ public class MetaModelToolCallingTests
         {
             ApiKey = "test-meta-key",
             BaseUrl = "https://inference.baseten.co/v1",
-            ModelName = "meta-models/muse-spark-open-1026"
+            ModelName = "meta-models/muse-spark-open"
         });
 
         var client = new MetaModelClient(config, httpClient, _mockLogger.Object);
@@ -235,7 +235,7 @@ public class MetaModelToolCallingTests
         {
             ApiKey = "test-meta-key",
             BaseUrl = "https://inference.baseten.co/v1",
-            ModelName = "meta-models/muse-spark-open-1026"
+            ModelName = "meta-models/muse-spark-open"
         });
 
         var client = new MetaModelClient(config, httpClient, _mockLogger.Object);
@@ -294,8 +294,8 @@ public class MetaModelToolCallingTests
         {
             ApiKey = "test-meta-key",
             BaseUrl = "https://inference.baseten.co/v1",
-            ModelName = "meta-models/muse-spark-open-1026",
-            VisionModelName = "meta-models/muse-spark-open-1026"
+            ModelName = "meta-models/muse-spark-open",
+            VisionModelName = "meta-models/muse-spark-open"
         });
 
         var client = new MetaModelClient(config, httpClient, _mockLogger.Object);
@@ -323,7 +323,7 @@ public class MetaModelToolCallingTests
 
         // Assert
         config.BaseUrl.Should().Be("https://inference.baseten.co/v1");
-        config.ModelName.Should().Be("meta-models/muse-spark-open-1026");
+        config.ModelName.Should().Be("meta-models/muse-spark-open");
         config.ApiKey.Should().BeEmpty();
         config.TimeoutSeconds.Should().Be(30);
     }

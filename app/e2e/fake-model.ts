@@ -28,7 +28,7 @@ export function createFakeModelServer(port = 5055): http.Server {
 
     if (req.url === '/health' && req.method === 'GET') {
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ status: 'ok', model: 'fake-meta-models/muse-spark-open-1026-test-double' }));
+      res.end(JSON.stringify({ status: 'ok', model: 'fake-meta-models/muse-spark-open-test-double' }));
       return;
     }
 
@@ -78,7 +78,7 @@ export function createFakeModelServer(port = 5055): http.Server {
               id: 'chatcmpl-test-q3',
               object: 'chat.completion',
               created: Math.floor(Date.now() / 1000),
-              model: 'meta-models/muse-spark-open-1026',
+              model: 'meta-models/muse-spark-open',
               choices: [
                 {
                   index: 0,
@@ -111,7 +111,7 @@ export function createFakeModelServer(port = 5055): http.Server {
               id: 'chatcmpl-test-reject',
               object: 'chat.completion',
               created: Math.floor(Date.now() / 1000),
-              model: 'meta-models/muse-spark-open-1026',
+              model: 'meta-models/muse-spark-open',
               choices: [
                 {
                   index: 0,
@@ -156,7 +156,7 @@ export function createFakeModelServer(port = 5055): http.Server {
               id: 'chatcmpl-test-safe-share',
               object: 'chat.completion',
               created: Math.floor(Date.now() / 1000),
-              model: 'meta-models/muse-spark-open-1026',
+              model: 'meta-models/muse-spark-open',
               choices: [
                 {
                   index: 0,
@@ -193,7 +193,7 @@ export function createFakeModelServer(port = 5055): http.Server {
               id: 'chatcmpl-test-member-share',
               object: 'chat.completion',
               created: Math.floor(Date.now() / 1000),
-              model: 'meta-models/muse-spark-open-1026',
+              model: 'meta-models/muse-spark-open',
               choices: [
                 {
                   index: 0,
@@ -225,7 +225,7 @@ export function createFakeModelServer(port = 5055): http.Server {
             id: 'chatcmpl-test-default',
             object: 'chat.completion',
             created: Math.floor(Date.now() / 1000),
-            model: 'meta-models/muse-spark-open-1026',
+            model: 'meta-models/muse-spark-open',
             choices: [
               {
                 index: 0,

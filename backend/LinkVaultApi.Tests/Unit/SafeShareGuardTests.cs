@@ -25,7 +25,7 @@ public class SafeShareGuardTests
         _dbContext = new LinkVaultDbContext(options);
 
         _mockModelClient.Setup(c => c.HasApiKey).Returns(true);
-        _mockModelClient.Setup(c => c.ModelName).Returns("meta-models/muse-spark-open-1026");
+        _mockModelClient.Setup(c => c.ModelName).Returns("meta-models/muse-spark-open");
 
         _guard = new SafeShareGuard(
             _dbContext,

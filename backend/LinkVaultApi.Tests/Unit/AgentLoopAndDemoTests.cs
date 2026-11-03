@@ -237,7 +237,7 @@ public class AgentLoopAndDemoTests
         // Arrange
         var mockAgentService = new Mock<IVaultAgentService>();
         mockAgentService.Setup(s => s.GeneratePlanAsync(It.IsAny<CreatePlanRequest>(), It.IsAny<ClaimsPrincipal>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new ModelUnavailableException("Baseten inference endpoint timed out after 30s.", "meta-models/muse-spark-open-1026"));
+            .ThrowsAsync(new ModelUnavailableException("Baseten inference endpoint timed out after 30s.", "meta-models/muse-spark-open"));
 
         var mockLogger = new Mock<ILogger<AgentController>>();
         var controller = new AgentController(mockAgentService.Object, _mockSafeShareGuard.Object, mockLogger.Object)
@@ -259,7 +259,7 @@ public class AgentLoopAndDemoTests
         var json = JsonSerializer.Serialize(objResult.Value);
         using var doc = JsonDocument.Parse(json);
         doc.RootElement.GetProperty("error").GetString().Should().Contain("Baseten inference endpoint timed out");
-        doc.RootElement.GetProperty("model").GetString().Should().Be("meta-models/muse-spark-open-1026");
+        doc.RootElement.GetProperty("model").GetString().Should().Be("meta-models/muse-spark-open");
     }
 
     [Fact]

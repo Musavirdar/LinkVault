@@ -54,7 +54,7 @@ public class MetaModelClient : IMetaModelClient
         if (!string.IsNullOrWhiteSpace(envModel))
             return envModel;
 
-        return string.IsNullOrWhiteSpace(_config.ModelName) ? "meta-models/muse-spark-open-1026" : _config.ModelName;
+        return string.IsNullOrWhiteSpace(_config.ModelName) ? "meta-models/muse-spark-open" : _config.ModelName;
     }
 
     private string ResolveGuardModelName()

@@ -6,7 +6,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178c6.svg)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**LinkVault** is an enterprise-grade digital workspace and verifiable AI assistant combining secure file management, link hubs, hierarchical directories, real-time collaboration, and an autonomous AI agent powered by **Meta Muse Spark Open** (`meta-models/muse-spark-open-1026`).
+**LinkVault** is an enterprise-grade digital workspace and verifiable AI assistant combining secure file management, link hubs, hierarchical directories, real-time collaboration, and an autonomous AI agent powered by **Meta Muse Spark Open** (`meta-models/muse-spark-open`).
 
 Built for the **Meta Hackathon**, LinkVault Agent implements *"Agents 102: Verifiable Agents"* — autonomous multi-step planning with human-in-the-loop approval gating, live SignalR progress streaming, Safe Share secret detection, zero-trust audit attribution, and an Apple HIG frontend.
 
@@ -16,7 +16,7 @@ Built for the **Meta Hackathon**, LinkVault Agent implements *"Agents 102: Verif
 
 | Capability | Description |
 |---|---|
-| **Meta Model Integration** | Powered by **Meta Muse Spark Open** (`meta-models/muse-spark-open-1026`) via Baseten's OpenAI-compatible Chat Completions API (`https://inference.baseten.co/v1`). |
+| **Meta Model Integration** | Powered by **Meta Muse Spark Open** (`meta-models/muse-spark-open`) via Baseten's OpenAI-compatible Chat Completions API (`https://inference.baseten.co/v1`). |
 | **Multi-Round Planning Loop** | Context-aware planner that executes read-only query tools (`list_directory`, `search`) immediately during planning (up to 5 rounds) to gather real workspace entity IDs, while compiling state-changing tools into an actionable plan. |
 | **Human-in-the-Loop Gating** | State-altering operations (moving files, creating folders, generating public share links, deleting resources) require explicit user approval. Protected by atomic concurrency guards (`409 Conflict`). |
 | **Isolated Execution & SignalR Streaming** | Approved plans execute inside dedicated `IServiceScopeFactory` scopes with live WebSocket updates (`/hubs/agent`) for step initiation, execution receipts, and completion. |
@@ -56,7 +56,7 @@ All secrets and model parameters are read exclusively from environment variables
 |---|---|---|
 | `META_MODEL_BASE_URL` | Baseten / Meta OpenAI-compatible endpoint | `https://inference.baseten.co/v1` |
 | `META_MODEL_API_KEY` | Your Baseten or Meta Model API key | `""` (Set in your environment) |
-| `META_MODEL_NAME` | Primary hackathon model | `meta-models/muse-spark-open-1026` |
+| `META_MODEL_NAME` | Primary hackathon model | `meta-models/muse-spark-open` |
 | `META_GUARD_MODEL_NAME` | Optional dedicated security guard model | `""` |
 | `META_VISION_MODEL_NAME` | Optional multimodal vision model | `""` |
 | `DEMO_MODE` | Enables demo workspace seeding & one-click login | `"true"` (for demo/evaluator) |
@@ -77,7 +77,7 @@ All secrets and model parameters are read exclusively from environment variables
 ```bash
 export META_MODEL_BASE_URL="https://inference.baseten.co/v1"
 export META_MODEL_API_KEY="your-baseten-api-key"
-export META_MODEL_NAME="meta-models/muse-spark-open-1026"
+export META_MODEL_NAME="meta-models/muse-spark-open"
 export DEMO_MODE="true"
 export JwtSettings__Secret="your-at-least-32-byte-long-secure-production-key-here"
 ```
@@ -86,7 +86,7 @@ export JwtSettings__Secret="your-at-least-32-byte-long-secure-production-key-her
 ```powershell
 $env:META_MODEL_BASE_URL = "https://inference.baseten.co/v1"
 $env:META_MODEL_API_KEY = "your-baseten-api-key"
-$env:META_MODEL_NAME = "meta-models/muse-spark-open-1026"
+$env:META_MODEL_NAME = "meta-models/muse-spark-open"
 $env:DEMO_MODE = "true"
 $env:JwtSettings__Secret = "your-at-least-32-byte-long-secure-production-key-here"
 ```
